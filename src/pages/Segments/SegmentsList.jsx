@@ -342,69 +342,71 @@ const SegmentsList = () => {
               <th style={{ padding: '12px', textAlign: 'left', borderBottom: '1px solid #ddd' }}>Действия</th>
             </tr>
           </thead>
-          <tbody>
-            {segments.length === 0 ? (
-              <tr>
-                <td colSpan="8" style={{ padding: '40px', textAlign: 'center', color: '#666' }}>
-                  Сегменты не найдены
-                </td>
-              </tr>
-            ) : (
-              segments.map((segment) => (
-                <tr key={segment.uSegmentId} style={{ borderBottom: '1px solid #eee' }}>
-                  <td style={{ padding: '12px' }}>{segment.uSegmentId}</td>
-                  <td style={{ padding: '12px' }}>{segment.userId}</td>
-                  <td style={{ padding: '12px' }}>
-                    <span style={{
-                      padding: '4px 8px',
-                      borderRadius: '4px',
-                      backgroundColor: segment.segment === 'VIP' ? '#ffd700' : '#e0e0e0',
-                      color: segment.segment === 'VIP' ? '#333' : '#666',
-                      fontWeight: 'bold',
-                      fontSize: '12px'
-                    }}>
-                      {segment.segment || '—'}
-                    </span>
-                  </td>
-                  <td style={{ padding: '12px' }}>{segment.rMinutes || '—'}</td>
-                  <td style={{ padding: '12px' }}>{segment.f || '—'}</td>
-                  <td style={{ padding: '12px' }}>
-                    {segment.m ? segment.m.toFixed(2) : '—'}
-                  </td>
-                  <td style={{ padding: '12px' }}>{formatDate(segment.updatedAt)}</td>
-                  <td style={{ padding: '12px' }}>
-                    <button
-                      onClick={() => navigate(`/segments/${segment.uSegmentId}`)}
-                      style={{
-                        padding: '5px 15px',
-                        backgroundColor: '#28a745',
-                        color: 'white',
-                        border: 'none',
-                        borderRadius: '4px',
-                        cursor: 'pointer',
-                        marginRight: '8px'
-                      }}
-                    >
-                      Детали
-                    </button>
-                    <button
-                      onClick={() => navigate(`/users/${segment.userId}`)}
-                      style={{
-                        padding: '5px 15px',
-                        backgroundColor: '#007bff',
-                        color: 'white',
-                        border: 'none',
-                        borderRadius: '4px',
-                        cursor: 'pointer'
-                      }}
-                    >
-                      Пользователь
-                    </button>
-                  </td>
-                </tr>
-              ))
-            )}
-          </tbody>
+         <tbody>
+  {segments.length === 0 ? (
+    <tr>
+      <td colSpan="8" style={{ padding: '40px', textAlign: 'center', color: '#666' }}>
+        Сегменты не найдены
+      </td>
+    </tr>
+  ) : (
+    segments.map((segment) => (
+      <tr key={segment.usegmentId} style={{ borderBottom: '1px solid #eee' }}>
+        <td style={{ padding: '12px' }}>{segment.usegmentId}</td>
+        <td style={{ padding: '12px' }}>{segment.userId}</td>
+        <td style={{ padding: '12px' }}>
+          <span style={{
+            padding: '4px 8px',
+            borderRadius: '4px',
+            backgroundColor: segment.segment === 'VIP' ? '#ffd700' : '#e0e0e0',
+            color: segment.segment === 'VIP' ? '#333' : '#666',
+            fontWeight: 'bold',
+            fontSize: '12px'
+          }}>
+            {segment.segment || '—'}
+          </span>
+        </td>
+        <td style={{ padding: '12px' }}>
+          {segment.rminutes ? `${parseFloat(segment.rminutes).toFixed(2)} мин.` : '—'}
+        </td>
+        <td style={{ padding: '12px' }}>{segment.f || '—'}</td>
+        <td style={{ padding: '12px' }}>
+          {segment.m ? `${segment.m.toFixed(2)} ₽` : '—'}
+        </td>
+        <td style={{ padding: '12px' }}>{formatDate(segment.updatedAt)}</td>
+        <td style={{ padding: '12px' }}>
+          <button
+            onClick={() => navigate(`/segments/${segment.usegmentId}`)}
+            style={{
+              padding: '5px 15px',
+              backgroundColor: '#28a745',
+              color: 'white',
+              border: 'none',
+              borderRadius: '4px',
+              cursor: 'pointer',
+              marginRight: '8px'
+            }}
+          >
+            Детали
+          </button>
+          <button
+            onClick={() => navigate(`/users/${segment.userId}`)}
+            style={{
+              padding: '5px 15px',
+              backgroundColor: '#007bff',
+              color: 'white',
+              border: 'none',
+              borderRadius: '4px',
+              cursor: 'pointer'
+            }}
+          >
+            Пользователь
+          </button>
+        </td>
+      </tr>
+    ))
+  )}
+</tbody>
         </table>
       </div>
 
