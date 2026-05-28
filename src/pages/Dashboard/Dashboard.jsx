@@ -1,25 +1,31 @@
 import { useEffect, useState } from 'react'
 import { useAuth } from '../../hooks/useAuth'
 import { usersService } from '../../services/users'
+import { segmentsService } from '../../services/segments'
 import { useNavigate } from 'react-router-dom'
 
 const Dashboard = () => {
   const { user } = useAuth()
   const navigate = useNavigate()
   const [usersCount, setUsersCount] = useState(0)
+  const [segmentsCount, setSegmentsCount] = useState(0)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/immutability
-    loadUsersCount()
+    loadStats()
   }, [])
 
-  const loadUsersCount = async () => {
+  const loadStats = async () => {
     try {
-      const data = await usersService.getAllUsers()
-      setUsersCount(data?.length || 0)
+      const [usersData, segmentsData] = await Promise.all([
+        usersService.getAllUsers(),
+        segmentsService.getAllSegments()
+      ])
+      setUsersCount(usersData?.length || 0)
+      setSegmentsCount(segmentsData?.length || 0)
     } catch (error) {
-      console.error('Failed to load users count:', error)
+      console.error('Failed to load stats:', error)
     } finally {
       setLoading(false)
     }
@@ -27,7 +33,7 @@ const Dashboard = () => {
 
   const stats = [
     { title: 'Пользователи', value: usersCount, color: '#007bff', link: '/users' },
-    { title: 'Сегменты', value: '—', color: '#28a745', link: '/segments' },
+    { title: 'Сегменты', value: segmentsCount, color: '#28a745', link: '/segments' },
     { title: 'Аномалии', value: '—', color: '#dc3545', link: '/anomalies' },
   ]
 
@@ -37,7 +43,7 @@ const Dashboard = () => {
         Добро пожаловать, {user?.login || 'Аналитик'}!
       </h1>
       <p style={{ marginBottom: '30px', color: '#666' }}>
-        Это ваша панель управления
+        Аналитическая платформа BankSpark
       </p>
 
       <div style={{
@@ -70,7 +76,7 @@ const Dashboard = () => {
               {stat.title}
             </div>
             <div style={{ fontSize: '32px', fontWeight: 'bold', color: stat.color }}>
-              {loading && stat.title === 'Пользователи' ? '...' : stat.value}
+              {loading ? '...' : stat.value}
             </div>
           </div>
         ))}
@@ -97,7 +103,7 @@ const Dashboard = () => {
               cursor: 'pointer'
             }}
           >
-            📋 Список пользователей
+            📋 Пользователи
           </button>
           <button
             onClick={() => navigate('/segments')}
