@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { segmentsService } from '../../services/segments'
+import { formatMinutes, formatDate } from '../../utils/dateFormatter'
 
 const SegmentDetail = () => {
   const { id } = useParams()
@@ -19,21 +20,12 @@ const SegmentDetail = () => {
     setError('')
     try {
       const data = await segmentsService.getSegmentById(id)
+      console.log('Segment detail:', data) // Для отладки
       setSegment(data)
     } catch (err) {
       setError(err)
     } finally {
       setLoading(false)
-    }
-  }
-
-  const formatDate = (dateString) => {
-    if (!dateString) return '—'
-    try {
-      const date = new Date(dateString)
-      return date.toLocaleString('ru-RU')
-    } catch {
-      return dateString
     }
   }
 
@@ -149,12 +141,12 @@ const SegmentDetail = () => {
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '15px' }}>
           <div style={{ borderBottom: '1px solid #eee', paddingBottom: '10px' }}>
             <div style={{ fontWeight: 'bold', color: '#666', marginBottom: '5px' }}>ID сегмента</div>
-            <div>{segment.uSegmentId}</div>
+            <div>{segment.usegmentId || segment.uSegmentId || '—'}</div>
           </div>
           
           <div style={{ borderBottom: '1px solid #eee', paddingBottom: '10px' }}>
             <div style={{ fontWeight: 'bold', color: '#666', marginBottom: '5px' }}>ID пользователя</div>
-            <div>{segment.userId}</div>
+            <div>{segment.userId || '—'}</div>
           </div>
           
           <div style={{ borderBottom: '1px solid #eee', paddingBottom: '10px' }}>
@@ -174,18 +166,24 @@ const SegmentDetail = () => {
           </div>
           
           <div style={{ borderBottom: '1px solid #eee', paddingBottom: '10px' }}>
-            <div style={{ fontWeight: 'bold', color: '#666', marginBottom: '5px' }}>R (давность, минуты)</div>
-            <div>{segment.rMinutes || '—'}</div>
+            <div style={{ fontWeight: 'bold', color: '#666', marginBottom: '5px' }}>R (давность)</div>
+            <div>{formatMinutes(segment.rminutes || segment.rMinutes)}</div>
+            <small style={{ color: '#999', fontSize: '11px' }}>
+              {segment.rminutes ? `(${parseFloat(segment.rminutes).toFixed(2)} минут)` : ''}
+            </small>
           </div>
           
           <div style={{ borderBottom: '1px solid #eee', paddingBottom: '10px' }}>
             <div style={{ fontWeight: 'bold', color: '#666', marginBottom: '5px' }}>F (частота)</div>
             <div>{segment.f || '—'}</div>
+            <small style={{ color: '#999', fontSize: '11px' }}>
+              {segment.f ? `${segment.f} покупок` : ''}
+            </small>
           </div>
           
           <div style={{ borderBottom: '1px solid #eee', paddingBottom: '10px' }}>
             <div style={{ fontWeight: 'bold', color: '#666', marginBottom: '5px' }}>M (сумма)</div>
-            <div>{segment.m ? `${segment.m.toFixed(2)}` : '—'}</div>
+            <div>{segment.m ? `${segment.m.toFixed(2)} ₽` : '—'}</div>
           </div>
           
           <div style={{ borderBottom: '1px solid #eee', paddingBottom: '10px' }}>

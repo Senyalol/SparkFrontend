@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { segmentsService } from '../../services/segments'
+import { formatMinutes, formatDate } from '../../utils/dateFormatter'
 
 const SegmentsList = () => {
   const navigate = useNavigate()
@@ -14,6 +15,23 @@ const SegmentsList = () => {
   const [rangeMin, setRangeMin] = useState('')
   const [rangeMax, setRangeMax] = useState('')
   const [showFilters, setShowFilters] = useState(false)
+
+  // ========== ФУНКЦИИ ДЛЯ ДИНАМИЧЕСКОГО ТИПА ПОЛЯ ==========
+  // Определяет тип поля ввода (текст или число)
+  const getInputType = () => {
+    if (filterType === 'userId') return 'number'      // ID пользователя - число
+    if (filterType === 'username') return 'text'      // ФИО - ТЕКСТ
+    if (filterType === 'segmentType') return 'text'   // Тип сегмента - ТЕКСТ
+    return 'number'  // R, F, M - числа
+  }
+
+  // Определяет шаг для числовых полей
+  const getInputStep = () => {
+    if (filterType === 'rMore' || filterType === 'rLess') return '0.01'
+    if (filterType === 'mMore' || filterType === 'mLess') return '0.01'
+    return '1'
+  }
+  // ========== КОНЕЦ ФУНКЦИЙ ==========
 
   // Загрузка всех сегментов
   const loadAllSegments = async () => {
@@ -43,69 +61,112 @@ const SegmentsList = () => {
             data = await segmentsService.getSegmentsByUserId(parseInt(searchValue))
           }
           break
+        
         case 'username':
-          if (searchValue) {
-            const [lastname, name] = searchValue.split(' ')
-            data = await segmentsService.getSegmentsByUsername(lastname, name || null)
+          if (searchValue && searchValue.trim()) {
+            // Разделяем фамилию и имя
+            const parts = searchValue.trim().split(' ')
+            const lastname = parts[0]
+            const name = parts.length > 1 ? parts[1] : null
+            data = await segmentsService.getSegmentsByUsername(lastname, name)
           }
           break
+        
         case 'segmentType':
-          if (searchValue) {
-            data = await segmentsService.getSegmentsByType(searchValue)
+          if (searchValue && searchValue.trim()) {
+            data = await segmentsService.getSegmentsByType(searchValue.trim())
           }
           break
+        
         case 'rMore':
           if (searchValue) {
-            data = await segmentsService.getSegmentsByRMore(parseFloat(searchValue))
+            const value = parseFloat(searchValue.toString().replace(',', '.'))
+            data = await segmentsService.getSegmentsByRMore(value)
           }
           break
+        
         case 'rLess':
           if (searchValue) {
-            data = await segmentsService.getSegmentsByRLess(parseFloat(searchValue))
+            const value = parseFloat(searchValue.toString().replace(',', '.'))
+            data = await segmentsService.getSegmentsByRLess(value)
           }
           break
+        
         case 'rRange':
           if (rangeMin && rangeMax) {
-            data = await segmentsService.getSegmentsByRRange(parseFloat(rangeMin), parseFloat(rangeMax))
+            const minValue = parseFloat(rangeMin.toString().replace(',', '.'))
+            const maxValue = parseFloat(rangeMax.toString().replace(',', '.'))
+            
+            if (isNaN(minValue) || isNaN(maxValue)) {
+              setError('Введите корректные числовые значения')
+              setLoading(false)
+              return
+            }
+            if (minValue > maxValue) {
+              setError('Минимальное значение не может быть больше максимального')
+              setLoading(false)
+              return
+            }
+            
+            data = await segmentsService.getSegmentsByRRange(minValue, maxValue)
           }
           break
+        
         case 'fMore':
           if (searchValue) {
             data = await segmentsService.getSegmentsByFMore(parseInt(searchValue))
           }
           break
+        
         case 'fLess':
           if (searchValue) {
             data = await segmentsService.getSegmentsByFLess(parseInt(searchValue))
           }
           break
+        
         case 'fRange':
           if (rangeMin && rangeMax) {
-            data = await segmentsService.getSegmentsByFRange(parseInt(rangeMin), parseInt(rangeMax))
+            data = await segmentsService.getSegmentsByFRange(
+              parseInt(rangeMin), 
+              parseInt(rangeMax)
+            )
           }
           break
+        
         case 'mMore':
           if (searchValue) {
             data = await segmentsService.getSegmentsByMMore(parseFloat(searchValue))
           }
           break
+        
         case 'mLess':
           if (searchValue) {
             data = await segmentsService.getSegmentsByMLess(parseFloat(searchValue))
           }
           break
+        
         case 'mRange':
           if (rangeMin && rangeMax) {
-            data = await segmentsService.getSegmentsByMRange(parseFloat(rangeMin), parseFloat(rangeMax))
+            data = await segmentsService.getSegmentsByMRange(
+              parseFloat(rangeMin), 
+              parseFloat(rangeMax)
+            )
           }
           break
+        
         default:
           data = await segmentsService.getAllSegments()
       }
       
       setSegments(data || [])
+      if (data && data.length === 0 && filterType !== 'all') {
+        setError('По вашему запросу ничего не найдено')
+      } else {
+        setError('')
+      }
     } catch (err) {
-      setError(err)
+      console.error('Apply filter error:', err)
+      setError(typeof err === 'string' ? err : 'Ошибка при применении фильтра')
       setSegments([])
     } finally {
       setLoading(false)
@@ -124,17 +185,6 @@ const SegmentsList = () => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     loadAllSegments()
   }, [])
-
-  // Форматирование даты
-  const formatDate = (dateString) => {
-    if (!dateString) return '—'
-    try {
-      const date = new Date(dateString)
-      return date.toLocaleString('ru-RU')
-    } catch {
-      return dateString
-    }
-  }
 
   if (loading) {
     return (
@@ -194,7 +244,7 @@ const SegmentsList = () => {
                 <option value="userId">По ID пользователя</option>
                 <option value="username">По имени/фамилии</option>
                 <option value="segmentType">По типу сегмента</option>
-                <optgroup label="R (давность)">
+                <optgroup label="R (давность в минутах)">
                   <option value="rMore">R {'>'} значение</option>
                   <option value="rLess">R {'<'} значение</option>
                   <option value="rRange">R в диапазоне</option>
@@ -212,21 +262,40 @@ const SegmentsList = () => {
               </select>
             </div>
 
+            {/* Подсказка для R фильтров */}
+            {filterType.startsWith('r') && filterType !== 'all' && (
+              <div style={{ flex: 2, minWidth: '200px', position: 'relative' }}>
+                <div style={{
+                  position: 'absolute',
+                  top: '-20px',
+                  left: '0',
+                  fontSize: '11px',
+                  color: '#007bff',
+                  whiteSpace: 'nowrap'
+                }}>
+                  💡 Введите значение в минутах (например: 60, 1440, 10080)
+                </div>
+              </div>
+            )}
+
+            {/* Одиночное поле ввода (для всех фильтров кроме диапазонов) */}
             {!['rRange', 'fRange', 'mRange'].includes(filterType) && filterType !== 'all' && (
               <div style={{ flex: 2, minWidth: '200px' }}>
                 <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>
                   Значение
                 </label>
                 <input
-                  type={filterType.includes('f') ? 'number' : 'text'}
+                  type={getInputType()}                          // ← динамический тип!
                   value={searchValue}
                   onChange={(e) => setSearchValue(e.target.value)}
                   placeholder={
                     filterType === 'userId' ? 'Введите ID пользователя' :
                     filterType === 'username' ? 'Фамилия Имя (через пробел)' :
                     filterType === 'segmentType' ? 'VIP, Standard и т.д.' :
+                    filterType.startsWith('r') ? 'Введите значение в минутах' :
                     'Введите значение'
                   }
+                  step={getInputStep()}                          // ← динамический шаг!
                   style={{
                     width: '100%',
                     padding: '8px',
@@ -238,17 +307,19 @@ const SegmentsList = () => {
               </div>
             )}
 
+            {/* Диапазон (для R, F, M) */}
             {['rRange', 'fRange', 'mRange'].includes(filterType) && (
               <>
                 <div style={{ flex: 1 }}>
                   <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>
-                    От
+                    От {filterType === 'rRange' ? '(минуты)' : ''}
                   </label>
                   <input
                     type="number"
                     value={rangeMin}
                     onChange={(e) => setRangeMin(e.target.value)}
-                    placeholder="Мин."
+                    placeholder={filterType === 'rRange' ? 'например: 800' : 'Мин.'}
+                    step={filterType === 'rRange' ? '0.01' : '1'}
                     style={{
                       width: '100%',
                       padding: '8px',
@@ -259,13 +330,14 @@ const SegmentsList = () => {
                 </div>
                 <div style={{ flex: 1 }}>
                   <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>
-                    До
+                    До {filterType === 'rRange' ? '(минуты)' : ''}
                   </label>
                   <input
                     type="number"
                     value={rangeMax}
                     onChange={(e) => setRangeMax(e.target.value)}
-                    placeholder="Макс."
+                    placeholder={filterType === 'rRange' ? 'например: 900' : 'Макс.'}
+                    step={filterType === 'rRange' ? '0.01' : '1'}
                     style={{
                       width: '100%',
                       padding: '8px',
@@ -306,6 +378,21 @@ const SegmentsList = () => {
               </button>
             </div>
           </div>
+
+          {/* Подсказка для R фильтров */}
+          {filterType.startsWith('r') && filterType !== 'all' && (
+            <div style={{
+              marginTop: '15px',
+              padding: '8px',
+              backgroundColor: '#e7f3ff',
+              borderRadius: '4px',
+              fontSize: '12px',
+              color: '#0066cc'
+            }}>
+              💡 <strong>Подсказка:</strong> Значения R фильтруются в минутах. Примеры:
+              60 мин = 1 час, 1440 мин = 1 день, 10080 мин = 1 неделя
+            </div>
+          )}
         </div>
       )}
 
@@ -335,78 +422,78 @@ const SegmentsList = () => {
               <th style={{ padding: '12px', textAlign: 'left', borderBottom: '1px solid #ddd' }}>ID сегмента</th>
               <th style={{ padding: '12px', textAlign: 'left', borderBottom: '1px solid #ddd' }}>ID пользователя</th>
               <th style={{ padding: '12px', textAlign: 'left', borderBottom: '1px solid #ddd' }}>Сегмент</th>
-              <th style={{ padding: '12px', textAlign: 'left', borderBottom: '1px solid #ddd' }}>R (минуты)</th>
-              <th style={{ padding: '12px', textAlign: 'left', borderBottom: '1px solid #ddd' }}>F</th>
-              <th style={{ padding: '12px', textAlign: 'left', borderBottom: '1px solid #ddd' }}>M</th>
+              <th style={{ padding: '12px', textAlign: 'left', borderBottom: '1px solid #ddd' }}>R (давность)</th>
+              <th style={{ padding: '12px', textAlign: 'left', borderBottom: '1px solid #ddd' }}>F (частота)</th>
+              <th style={{ padding: '12px', textAlign: 'left', borderBottom: '1px solid #ddd' }}>M (сумма)</th>
               <th style={{ padding: '12px', textAlign: 'left', borderBottom: '1px solid #ddd' }}>Обновлен</th>
               <th style={{ padding: '12px', textAlign: 'left', borderBottom: '1px solid #ddd' }}>Действия</th>
             </tr>
           </thead>
-         <tbody>
-  {segments.length === 0 ? (
-    <tr>
-      <td colSpan="8" style={{ padding: '40px', textAlign: 'center', color: '#666' }}>
-        Сегменты не найдены
-      </td>
-    </tr>
-  ) : (
-    segments.map((segment) => (
-      <tr key={segment.usegmentId} style={{ borderBottom: '1px solid #eee' }}>
-        <td style={{ padding: '12px' }}>{segment.usegmentId}</td>
-        <td style={{ padding: '12px' }}>{segment.userId}</td>
-        <td style={{ padding: '12px' }}>
-          <span style={{
-            padding: '4px 8px',
-            borderRadius: '4px',
-            backgroundColor: segment.segment === 'VIP' ? '#ffd700' : '#e0e0e0',
-            color: segment.segment === 'VIP' ? '#333' : '#666',
-            fontWeight: 'bold',
-            fontSize: '12px'
-          }}>
-            {segment.segment || '—'}
-          </span>
-        </td>
-        <td style={{ padding: '12px' }}>
-          {segment.rminutes ? `${parseFloat(segment.rminutes).toFixed(2)} мин.` : '—'}
-        </td>
-        <td style={{ padding: '12px' }}>{segment.f || '—'}</td>
-        <td style={{ padding: '12px' }}>
-          {segment.m ? `${segment.m.toFixed(2)} ₽` : '—'}
-        </td>
-        <td style={{ padding: '12px' }}>{formatDate(segment.updatedAt)}</td>
-        <td style={{ padding: '12px' }}>
-          <button
-            onClick={() => navigate(`/segments/${segment.usegmentId}`)}
-            style={{
-              padding: '5px 15px',
-              backgroundColor: '#28a745',
-              color: 'white',
-              border: 'none',
-              borderRadius: '4px',
-              cursor: 'pointer',
-              marginRight: '8px'
-            }}
-          >
-            Детали
-          </button>
-          <button
-            onClick={() => navigate(`/users/${segment.userId}`)}
-            style={{
-              padding: '5px 15px',
-              backgroundColor: '#007bff',
-              color: 'white',
-              border: 'none',
-              borderRadius: '4px',
-              cursor: 'pointer'
-            }}
-          >
-            Пользователь
-          </button>
-        </td>
-      </tr>
-    ))
-  )}
-</tbody>
+          <tbody>
+            {segments.length === 0 ? (
+              <tr>
+                <td colSpan="8" style={{ padding: '40px', textAlign: 'center', color: '#666' }}>
+                  Сегменты не найдены
+                </td>
+              </tr>
+            ) : (
+              segments.map((segment) => (
+                <tr key={segment.usegmentId} style={{ borderBottom: '1px solid #eee' }}>
+                  <td style={{ padding: '12px' }}>{segment.usegmentId}</td>
+                  <td style={{ padding: '12px' }}>{segment.userId}</td>
+                  <td style={{ padding: '12px' }}>
+                    <span style={{
+                      padding: '4px 8px',
+                      borderRadius: '4px',
+                      backgroundColor: segment.segment === 'VIP' ? '#ffd700' : '#e0e0e0',
+                      color: segment.segment === 'VIP' ? '#333' : '#666',
+                      fontWeight: 'bold',
+                      fontSize: '12px'
+                    }}>
+                      {segment.segment || '—'}
+                    </span>
+                  </td>
+                  <td style={{ padding: '12px' }}>
+                    {formatMinutes(segment.rminutes)}
+                  </td>
+                  <td style={{ padding: '12px' }}>{segment.f || '—'}</td>
+                  <td style={{ padding: '12px' }}>
+                    {segment.m ? `${segment.m.toFixed(2)} ₽` : '—'}
+                  </td>
+                  <td style={{ padding: '12px' }}>{formatDate(segment.updatedAt)}</td>
+                  <td style={{ padding: '12px' }}>
+                    <button
+                      onClick={() => navigate(`/segments/${segment.usegmentId}`)}
+                      style={{
+                        padding: '5px 15px',
+                        backgroundColor: '#28a745',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '4px',
+                        cursor: 'pointer',
+                        marginRight: '8px'
+                      }}
+                    >
+                      Детали
+                    </button>
+                    <button
+                      onClick={() => navigate(`/users/${segment.userId}`)}
+                      style={{
+                        padding: '5px 15px',
+                        backgroundColor: '#007bff',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '4px',
+                        cursor: 'pointer'
+                      }}
+                    >
+                      Пользователь
+                    </button>
+                  </td>
+                </tr>
+              ))
+            )}
+          </tbody>
         </table>
       </div>
 
