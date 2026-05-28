@@ -21,54 +21,59 @@ export const AuthProvider = ({ children }) => {
     const accessToken = tokenStorage.getAccessToken()
     const savedUser = tokenStorage.getUser()
     
+    console.log('🔍 [AUTH] Checking auth status...')
+    console.log('🔍 [AUTH] Access token:', accessToken ? 'present' : 'missing')
+    console.log('🔍 [AUTH] Saved user:', savedUser)
+    
     if (accessToken && savedUser) {
-      try {
-        const analystData = await authService.getCurrentAnalyst()
-        if (analystData) {
-          setIsAuthenticated(true)
-          setUser(analystData)
-          setUserRole(analystData.role)
-          tokenStorage.setUser(analystData)
-        } else {
-          tokenStorage.clear()
-        }
-      } catch (err) {
-        console.error('Check auth error:', err)
-        tokenStorage.clear()
-      }
+      setIsAuthenticated(true)
+      setUser(savedUser)
+      setUserRole(savedUser.role)
+      console.log('✅ [AUTH] User authenticated:', savedUser.login, 'Role:', savedUser.role)
+    } else {
+      console.log('❌ [AUTH] No valid auth data found')
+      tokenStorage.clear()
     }
     setLoading(false)
   }
 
-  const login = async (login, password, inviteToken = null) => {
+  const login = async (login, password, userToken) => {
     setError(null)
-    const result = await authService.login(login, password, inviteToken)
+    console.log('🔐 [AUTH] Login attempt for:', login)
+    
+    const result = await authService.login(login, password, userToken)
     
     if (result.success) {
       setIsAuthenticated(true)
       setUser(result.user)
       setUserRole(result.user?.role)
+      console.log('✅ [AUTH] Login successful, role:', result.user?.role)
       return { success: true }
     } else {
       setError(result.error)
+      console.log('❌ [AUTH] Login failed:', result.error)
       return { success: false, error: result.error }
     }
   }
 
-  // Регистрация
-  const register = async (inviteToken, login, password) => {
+  const register = async (login, password, userToken) => {
     setError(null)
-    const result = await authService.register(login, password, inviteToken)
+    console.log('📝 [AUTH] Register attempt for:', login)
+    
+    const result = await authService.register(login, password, userToken)
     
     if (result.success) {
+      console.log('✅ [AUTH] Register successful')
       return { success: true, message: result.message }
     } else {
       setError(result.error)
+      console.log('❌ [AUTH] Register failed:', result.error)
       return { success: false, error: result.error }
     }
   }
 
   const logout = async () => {
+    console.log('🚪 [AUTH] Logout')
     await authService.logout()
     setIsAuthenticated(false)
     setUser(null)

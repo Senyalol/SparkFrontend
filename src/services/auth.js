@@ -1,35 +1,26 @@
 import api from './api'
 import { tokenStorage } from '../utils/tokenStorage'
 
-// Функция для определения роли по токену
-const getRoleFromToken = (token) => {
-  // Если токен начинается с "ADMIN" - значит роль ADMIN
-  if (token && token.toUpperCase().includes('ADMIN')) {
-    return 'ADMIN'
-  }
-  // Иначе - ANALYST
-  return 'ANALYST'
-}
-
 export const authService = {
   // Регистрация нового аналитика
   register: async (login, password, userToken) => {
     try {
       const requestData = {
-        token: userToken,
+        token: userToken,  // invite token
         login: login,
         password: password
       }
-      console.log('Register request:', requestData)
+      console.log('📝 [REGISTER] Request:', requestData)
       
       const response = await api.post('/analyst/reg', requestData)
       
-      console.log('Register response:', response.data)
+      console.log('✅ [REGISTER] Response:', response.data)
+      console.log('✅ [REGISTER] Status:', response.status)
       
       if (response.status === 200 || response.status === 201) {
         return { 
           success: true, 
-          message: 'Регистрация успешна',
+          message: 'Регистрация успешна! Теперь вы можете войти.',
           data: response.data
         }
       }
@@ -39,14 +30,21 @@ export const authService = {
         error: response.data?.message || 'Ошибка регистрации' 
       }
     } catch (error) {
-      console.error('Registration error:', error)
-      console.error('Error status:', error.response?.status)
-      console.error('Error data:', error.response?.data)
+      console.error('❌ [REGISTER] Error:', error)
+      console.error('❌ [REGISTER] Status:', error.response?.status)
+      console.error('❌ [REGISTER] Data:', error.response?.data)
       
       if (error.response?.status === 403) {
         return {
           success: false,
-          error: 'Неверный или просроченный токен. Обратитесь к администратору.'
+          error: 'Неверный или просроченный invite токен. Обратитесь к администратору.'
+        }
+      }
+      
+      if (error.response?.status === 400) {
+        return {
+          success: false,
+          error: error.response?.data?.message || 'Неверные данные регистрации'
         }
       }
       
@@ -61,36 +59,43 @@ export const authService = {
   login: async (login, password, userToken) => {
     try {
       const requestData = {
-        token: userToken,
+        token: userToken,  // invite token
         login: login,
         password: password
       }
-      console.log('Login request:', requestData)
+      console.log('📝 [LOGIN] Request:', requestData)
       
       const response = await api.post('/analyst/auth', requestData)
       
-      console.log('Login response:', response.data)
+      console.log('✅ [LOGIN] Response:', response.data)
+      console.log('✅ [LOGIN] Status:', response.status)
       
-      // После успешного входа получаем JWT токены
-      if (response.data && (response.data.accessToken || response.data.token)) {
-        const accessToken = response.data.accessToken || response.data.token
+      // Бэкенд возвращает поле "token" (JWT access token)
+      if (response.data && response.data.token) {
+        const accessToken = response.data.token
         tokenStorage.setAccessToken(accessToken)
+        console.log('💾 [LOGIN] Access token saved')
         
+        // Сохраняем refresh token если есть
         if (response.data.refreshToken) {
           tokenStorage.setRefreshToken(response.data.refreshToken)
+          console.log('💾 [LOGIN] Refresh token saved')
         }
         
-        // ОПРЕДЕЛЯЕМ РОЛЬ ПО INVITE ТОКЕНУ!
-        const userRole = getRoleFromToken(userToken)
-        console.log('Determined role from token:', userRole)
+        // Определяем роль по invite токену
+        let userRole = 'ANALYST'
+        if (userToken && userToken.toUpperCase().includes('ADMIN')) {
+          userRole = 'ADMIN'
+        }
+        console.log('🎭 [LOGIN] Role determined from invite token:', userRole)
         
-        // Сохраняем информацию о пользователе
         const userData = {
           login: login,
-          role: userRole
+          role: userRole,
+          inviteToken: userToken
         }
         tokenStorage.setUser(userData)
-        console.log('User data saved:', userData)
+        console.log('💾 [LOGIN] User data saved:', userData)
         
         return { 
           success: true, 
@@ -103,14 +108,14 @@ export const authService = {
         error: response.data?.message || 'Неверный логин, пароль или токен' 
       }
     } catch (error) {
-      console.error('Login error:', error)
-      console.error('Error status:', error.response?.status)
-      console.error('Error data:', error.response?.data)
+      console.error('❌ [LOGIN] Error:', error)
+      console.error('❌ [LOGIN] Status:', error.response?.status)
+      console.error('❌ [LOGIN] Data:', error.response?.data)
       
       if (error.response?.status === 403) {
         return {
           success: false,
-          error: 'Доступ запрещен. Неверный токен, логин или пароль.'
+          error: 'Доступ запрещен. Неверный invite токен, логин или пароль.'
         }
       }
       
@@ -132,12 +137,16 @@ export const authService = {
   getCurrentAnalyst: async () => {
     try {
       const token = tokenStorage.getAccessToken()
-      if (!token) return null
+      if (!token) {
+        console.log('🔍 [GET_CURRENT] No access token found')
+        return null
+      }
       
       const response = await api.get('/analyst/getFromJWT')
+      console.log('✅ [GET_CURRENT] Response:', response.data)
       return response.data
     } catch (error) {
-      console.error('Get current analyst error:', error)
+      console.error('❌ [GET_CURRENT] Error:', error)
       if (error.response?.status === 401 || error.response?.status === 403) {
         tokenStorage.clear()
       }
@@ -151,11 +160,13 @@ export const authService = {
       const token = tokenStorage.getAccessToken()
       if (token) {
         await api.get('/analyst/exit')
+        console.log('✅ [LOGOUT] Success')
       }
     } catch (error) {
-      console.error('Logout error:', error)
+      console.error('❌ [LOGOUT] Error:', error)
     } finally {
       tokenStorage.clear()
+      console.log('🗑️ [LOGOUT] Storage cleared')
     }
   },
 
@@ -176,12 +187,13 @@ export const authService = {
         if (response.data.refreshToken) {
           tokenStorage.setRefreshToken(response.data.refreshToken)
         }
+        console.log('✅ [REFRESH] Token refreshed')
         return { success: true }
       }
       
       return { success: false }
     } catch (error) {
-      console.error('Refresh token error:', error)
+      console.error('❌ [REFRESH] Error:', error)
       tokenStorage.clear()
       return { success: false }
     }

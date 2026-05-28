@@ -3,7 +3,7 @@ import { useNavigate, Link } from 'react-router-dom'
 import { useAuth } from '../../hooks/useAuth'
 
 const Login = () => {
-  const [userToken, setUserToken] = useState('')  // Личный токен пользователя
+  const [inviteToken, setInviteToken] = useState('')
   const [login, setLogin] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
@@ -16,9 +16,27 @@ const Login = () => {
     setError('')
     setLoading(true)
     
-    console.log('Login with:', { userToken, login, password })
+    if (!inviteToken.trim()) {
+      setError('Введите invite токен')
+      setLoading(false)
+      return
+    }
     
-    const result = await loginUser(login, password, userToken)
+    if (!login.trim()) {
+      setError('Введите логин')
+      setLoading(false)
+      return
+    }
+    
+    if (!password.trim()) {
+      setError('Введите пароль')
+      setLoading(false)
+      return
+    }
+    
+    console.log('Login with:', { inviteToken, login, password })
+    
+    const result = await loginUser(login, password, inviteToken)
     
     if (result.success) {
       navigate('/dashboard')
@@ -61,13 +79,13 @@ const Login = () => {
         <form onSubmit={handleSubmit}>
           <div style={{ marginBottom: '15px' }}>
             <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>
-              Ваш персональный токен <span style={{ color: 'red' }}>*</span>
+              Invite токен <span style={{ color: 'red' }}>*</span>
             </label>
             <input
               type="text"
-              value={userToken}
-              onChange={(e) => setUserToken(e.target.value)}
-              placeholder="Введите ваш персональный токен"
+              value={inviteToken}
+              onChange={(e) => setInviteToken(e.target.value)}
+              placeholder="Введите ваш invite токен"
               style={{
                 width: '100%',
                 padding: '10px',
@@ -77,6 +95,9 @@ const Login = () => {
               }}
               required
             />
+            <small style={{ color: '#666', fontSize: '12px' }}>
+              Токен, начинающийся с ADMIN - дает права администратора
+            </small>
           </div>
           
           <div style={{ marginBottom: '15px' }}>

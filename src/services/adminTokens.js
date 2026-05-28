@@ -1,7 +1,7 @@
 import api from './api'
 
 export const adminTokensService = {
-  // Получить все токены (только ADMIN)
+  // Получить все токены
   getAllTokens: async () => {
     try {
       const response = await api.get('/admin/tokens')
@@ -12,7 +12,7 @@ export const adminTokensService = {
     }
   },
 
-  // Получить использованные/неиспользованные токены
+  // Получить токены по статусу использования
   getTokensByUsedStatus: async (used) => {
     try {
       const response = await api.get('/admin/tokens/used', {
@@ -25,8 +25,8 @@ export const adminTokensService = {
     }
   },
 
-  // Сгенерировать новый токен с параметрами
-  generateToken: async (role = null, hoursValid = null) => {
+  // Сгенерировать новый токен
+  generateToken: async (role, hoursValid) => {
     try {
       const body = {}
       if (role) body.role = role

@@ -63,6 +63,7 @@ function App() {
           <Route path="anomalies" element={<AnomaliesList />} />
           <Route path="anomalies/:id" element={<AnomalyDetail />} />
           
+          
           {/* Только для администратора */}
           <Route path="analysts" element={
             <ProtectedRoute requireAdmin>

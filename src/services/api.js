@@ -10,9 +10,10 @@ const api = axios.create({
   },
 })
 
-// Добавляем access token в каждый запрос (только если он есть)
+// Добавляем access token в каждый запрос
 api.interceptors.request.use((config) => {
   const token = tokenStorage.getAccessToken()
+  console.log(`[API] ${config.method?.toUpperCase()} ${config.url}`, token ? '✅ Token present' : '❌ NO TOKEN')
   if (token) {
     config.headers.Authorization = `Bearer ${token}`
   }
@@ -21,9 +22,14 @@ api.interceptors.request.use((config) => {
 
 // Обработка ответов
 api.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    console.log(`[API] Response ${response.status} from ${response.config.url}`)
+    return response
+  },
   async (error) => {
     const originalRequest = error.config
+    
+    console.error(`[API] Error ${error.response?.status} from ${originalRequest?.url}`, error.response?.data)
     
     // Для регистрации и логина не пытаемся обновлять токен
     if (originalRequest.url?.includes('/auth') || originalRequest.url?.includes('/reg')) {
@@ -49,6 +55,7 @@ api.interceptors.response.use(
           return api(originalRequest)
         }
       } catch (refreshError) {
+        console.error('[API] Refresh token failed:', refreshError)
         tokenStorage.clear()
         window.location.href = '/login'
         return Promise.reject(refreshError)
