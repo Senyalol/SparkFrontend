@@ -3,7 +3,7 @@ import { useNavigate, Link } from 'react-router-dom'
 import { useAuth } from '../../hooks/useAuth'
 
 const Register = () => {
-  const [userToken, setUserToken] = useState('')  // Уникальный токен аналитика
+  const [userToken, setUserToken] = useState('')  // Личный токен пользователя
   const [login, setLogin] = useState('')
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
@@ -19,28 +19,33 @@ const Register = () => {
     setSuccess('')
     setLoading(true)
 
-    // Проверка токена
-    if (!userToken) {
-      setError('Введите ваш персональный токен')
+    if (!userToken.trim()) {
+      setError('Введите ваш личный токен')
       setLoading(false)
       return
     }
 
-    // Проверка совпадения паролей
+    if (!login.trim()) {
+      setError('Введите логин')
+      setLoading(false)
+      return
+    }
+
     if (password !== confirmPassword) {
       setError('Пароли не совпадают')
       setLoading(false)
       return
     }
 
-    // Проверка длины пароля
     if (password.length < 4) {
       setError('Пароль должен содержать минимум 4 символа')
       setLoading(false)
       return
     }
 
-    const result = await register(userToken, login, password)  // Передаем токен
+    console.log('Registering with:', { userToken, login, password })
+
+    const result = await register(login, password, userToken)
     
     if (result.success) {
       setSuccess('Регистрация успешна! Теперь вы можете войти')
@@ -104,7 +109,7 @@ const Register = () => {
               type="text"
               value={userToken}
               onChange={(e) => setUserToken(e.target.value)}
-              placeholder="Введите ваш персональный токен (выдан администратором)"
+              placeholder="Введите ваш персональный токен"
               style={{
                 width: '100%',
                 padding: '10px',
@@ -115,7 +120,7 @@ const Register = () => {
               required
             />
             <small style={{ color: '#666', fontSize: '12px' }}>
-              Ваш уникальный токен для доступа к системе
+              Токен выдан администратором при создании invite токена
             </small>
           </div>
           

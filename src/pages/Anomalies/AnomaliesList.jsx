@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { anomaliesService } from '../../services/anomalies'
-import { formatDateTime } from '../../utils/dateFormatter'
+import { formatDateTime, dateToTimestamp } from '../../utils/dateFormatter'
 
 const AnomaliesList = () => {
   const navigate = useNavigate()
@@ -15,6 +15,11 @@ const AnomaliesList = () => {
   const [rangeMin, setRangeMin] = useState('')
   const [rangeMax, setRangeMax] = useState('')
   const [showFilters, setShowFilters] = useState(false)
+  
+  // Состояния для фильтров по времени
+  const [dateValue, setDateValue] = useState('')
+  const [rangeMinDate, setRangeMinDate] = useState('')
+  const [rangeMaxDate, setRangeMaxDate] = useState('')
 
   // ========== ФУНКЦИИ ДЛЯ ДИНАМИЧЕСКОГО ТИПА ПОЛЯ ==========
   const getInputType = () => {
@@ -23,16 +28,14 @@ const AnomaliesList = () => {
     if (filterType === 'sumMore') return 'number'
     if (filterType === 'sumLess') return 'number'
     if (filterType === 'sumRange') return 'number'
-    if (filterType === 'etimeMore') return 'number'
-    if (filterType === 'etimeLess') return 'number'
-    if (filterType === 'etimeRange') return 'number'
+    if (filterType === 'etimeMore') return 'datetime-local'
+    if (filterType === 'etimeLess') return 'datetime-local'
+    if (filterType === 'etimeRange') return 'datetime-local'
     if (filterType === 'avgCheckMore') return 'number'
     if (filterType === 'avgCheckLess') return 'number'
     if (filterType === 'avgCheckRange') return 'number'
     return 'text'
   }
-
-  
 
   const getInputStep = () => {
     if (filterType === 'sumMore' || filterType === 'sumLess') return '0.01'
@@ -48,8 +51,9 @@ const AnomaliesList = () => {
       case 'type': return 'BIGGER_THEN_AVG_CHECK, NEGATIVE_M и т.д.'
       case 'sumMore': return 'Минимальная сумма (например: 1000)'
       case 'sumLess': return 'Максимальная сумма (например: 5000)'
-      case 'etimeMore': return 'Время после (timestamp в секундах)'
-      case 'etimeLess': return 'Время до (timestamp в секундах)'
+      case 'etimeMore': return 'Выберите дату и время'
+      case 'etimeLess': return 'Выберите дату и время'
+      case 'etimeRange': return ''
       case 'avgCheckMore': return 'Минимальный средний чек'
       case 'avgCheckLess': return 'Максимальный средний чек'
       default: return 'Введите значение'
@@ -59,15 +63,15 @@ const AnomaliesList = () => {
 
   // ========== ФУНКЦИИ ДЛЯ ОТОБРАЖЕНИЯ ==========
   
-  // ТИП ТРАНЗАКЦИИ - берем из message (Credit/Debit)
-  const getTransactionType = (message) => {
-    if (!message) return '—'
-    if (message.includes('Credit')) return 'Credit'
-    if (message.includes('Debit')) return 'Debit'
-    if (message.includes('DEPOSIT')) return 'DEPOSIT'
-    if (message.includes('WITHDRAW')) return 'WITHDRAW'
-    if (message.includes('REVERSAL')) return 'REVERSAL'
-    return message
+  // ТИП ТРАНЗАКЦИИ - берем из type (Credit/Debit)
+  const getTransactionType = (type) => {
+    if (!type) return '—'
+    if (type.includes('Credit')) return 'Credit'
+    if (type.includes('Debit')) return 'Debit'
+    if (type.includes('DEPOSIT')) return 'DEPOSIT'
+    if (type.includes('WITHDRAW')) return 'WITHDRAW'
+    if (type.includes('REVERSAL')) return 'REVERSAL'
+    return type
   }
 
   // Цвет для типа транзакции
@@ -86,9 +90,10 @@ const AnomaliesList = () => {
     }
   }
 
-  // ТИП АНОМАЛИИ - берем из type (enum AnomalyType)
-  const getAnomalyTypeName = (type) => {
-    switch (type) {
+  // ТИП АНОМАЛИИ - берем из message (enum AnomalyType)
+  const getAnomalyTypeName = (message) => {
+    if (!message) return '—'
+    switch (message) {
       case 'BIGGER_THEN_AVG_CHECK':
         return 'Превышение среднего чека'
       case 'NEGATIVE_M':
@@ -100,18 +105,13 @@ const AnomaliesList = () => {
       case 'EXCESSIVE_REVERSAL_PATTERN':
         return 'Подозрительный возврат'
       default:
-        return type?.replace(/_/g, ' ') || 'Неизвестный тип'
+        return message?.replace(/_/g, ' ') || 'Неизвестный тип'
     }
   }
 
-  // Форматированный тип аномалии (только название, код не нужен в скобках)
-  const getFormattedAnomalyType = (type) => {
-    return getAnomalyTypeName(type)
-  }
-
   // Цвет для типа аномалии
-  const getAnomalyTypeColor = (type) => {
-    switch (type) {
+  const getAnomalyTypeColor = (message) => {
+    switch (message) {
       case 'BIGGER_THEN_AVG_CHECK':
         return { bg: '#ff9800', color: '#fff' }
       case 'NEGATIVE_M':
@@ -197,24 +197,71 @@ const AnomaliesList = () => {
           }
           break
         
+        // ========== ФИЛЬТРЫ ПО ВРЕМЕНИ С DATETIME-LOCAL ==========
         case 'etimeMore':
-          if (searchValue) {
-            const value = parseInt(searchValue)
-            data = await anomaliesService.getAnomaliesByMaxEventTime(value)
+          if (dateValue) {
+            const timestamp = dateToTimestamp(dateValue)
+            if (timestamp) {
+              data = await anomaliesService.getAnomaliesByMaxEventTime(timestamp)
+            } else {
+              setError('Введите корректную дату и время')
+              setLoading(false)
+              return
+            }
           }
           break
         
         case 'etimeLess':
-          if (searchValue) {
-            const value = parseInt(searchValue)
-            data = await anomaliesService.getAnomaliesByMinEventTime(value)
+          if (dateValue) {
+            const timestamp = dateToTimestamp(dateValue)
+            if (timestamp) {
+              data = await anomaliesService.getAnomaliesByMinEventTime(timestamp)
+            } else {
+              setError('Введите корректную дату и время')
+              setLoading(false)
+              return
+            }
           }
           break
         
         case 'etimeRange':
+          if (rangeMinDate && rangeMaxDate) {
+            const minTimestamp = dateToTimestamp(rangeMinDate)
+            const maxTimestamp = dateToTimestamp(rangeMaxDate)
+            if (minTimestamp && maxTimestamp) {
+              if (minTimestamp > maxTimestamp) {
+                setError('Начальная дата не может быть позже конечной')
+                setLoading(false)
+                return
+              }
+              data = await anomaliesService.getAnomaliesByEventTimeRange(minTimestamp, maxTimestamp)
+            } else {
+              setError('Введите корректные дату и время')
+              setLoading(false)
+              return
+            }
+          }
+          break
+        // ========== КОНЕЦ ФИЛЬТРОВ ПО ВРЕМЕНИ ==========
+        
+        case 'avgCheckMore':
+          if (searchValue) {
+            const value = parseFloat(searchValue.toString().replace(',', '.'))
+            data = await anomaliesService.getAnomaliesByAvgCheckMore(value)
+          }
+          break
+
+        case 'avgCheckLess':
+          if (searchValue) {
+            const value = parseFloat(searchValue.toString().replace(',', '.'))
+            data = await anomaliesService.getAnomaliesByAvgCheckLess(value)
+          }
+          break
+
+        case 'avgCheckRange':
           if (rangeMin && rangeMax) {
-            const minValue = parseInt(rangeMin)
-            const maxValue = parseInt(rangeMax)
+            const minValue = parseFloat(rangeMin.toString().replace(',', '.'))
+            const maxValue = parseFloat(rangeMax.toString().replace(',', '.'))
             
             if (isNaN(minValue) || isNaN(maxValue)) {
               setError('Введите корректные числовые значения')
@@ -227,43 +274,9 @@ const AnomaliesList = () => {
               return
             }
             
-            data = await anomaliesService.getAnomaliesByEventTimeRange(minValue, maxValue)
+            data = await anomaliesService.getAnomaliesByAvgCheckRange(minValue, maxValue)
           }
           break
-        
-      case 'avgCheckMore':
-        if (searchValue) {
-          const value = parseFloat(searchValue.toString().replace(',', '.'))
-          data = await anomaliesService.getAnomaliesByAvgCheckMore(value)
-        }
-        break
-
-      case 'avgCheckLess':
-        if (searchValue) {
-          const value = parseFloat(searchValue.toString().replace(',', '.'))
-          data = await anomaliesService.getAnomaliesByAvgCheckLess(value)
-        }
-        break
-
-      case 'avgCheckRange':
-        if (rangeMin && rangeMax) {
-          const minValue = parseFloat(rangeMin.toString().replace(',', '.'))
-          const maxValue = parseFloat(rangeMax.toString().replace(',', '.'))
-          
-          if (isNaN(minValue) || isNaN(maxValue)) {
-            setError('Введите корректные числовые значения')
-            setLoading(false)
-            return
-          }
-          if (minValue > maxValue) {
-            setError('Минимальное значение не может быть больше максимального')
-            setLoading(false)
-            return
-          }
-          
-          data = await anomaliesService.getAnomaliesByAvgCheckRange(minValue, maxValue)
-        }
-        break
         
         default:
           data = await anomaliesService.getAllAnomalies()
@@ -289,6 +302,9 @@ const AnomaliesList = () => {
     setSearchValue('')
     setRangeMin('')
     setRangeMax('')
+    setDateValue('')
+    setRangeMinDate('')
+    setRangeMaxDate('')
     loadAllAnomalies()
   }
 
@@ -296,6 +312,21 @@ const AnomaliesList = () => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     loadAllAnomalies()
   }, [])
+
+  // Функция для получения значения поля ввода в зависимости от типа фильтра
+  const getInputValue = () => {
+    if (filterType === 'etimeMore' || filterType === 'etimeLess') return dateValue
+    return searchValue
+  }
+
+  // Функция для изменения значения поля ввода
+  const handleInputChange = (e) => {
+    if (filterType === 'etimeMore' || filterType === 'etimeLess') {
+      setDateValue(e.target.value)
+    } else {
+      setSearchValue(e.target.value)
+    }
+  }
 
   if (loading) {
     return (
@@ -360,9 +391,9 @@ const AnomaliesList = () => {
                   <option value="sumRange">Sum в диапазоне</option>
                 </optgroup>
                 <optgroup label="Время (eventTime)">
-                  <option value="etimeMore">После времени (timestamp)</option>
-                  <option value="etimeLess">До времени (timestamp)</option>
-                  <option value="etimeRange">В диапазоне timestamp</option>
+                  <option value="etimeMore">После даты и времени</option>
+                  <option value="etimeLess">До даты и времени</option>
+                  <option value="etimeRange">В диапазоне дат</option>
                 </optgroup>
                 <optgroup label="Средний чек (avgCheck)">
                   <option value="avgCheckMore">AvgCheck {'>'} значение</option>
@@ -380,8 +411,8 @@ const AnomaliesList = () => {
                 </label>
                 <input
                   type={getInputType()}
-                  value={searchValue}
-                  onChange={(e) => setSearchValue(e.target.value)}
+                  value={getInputValue()}
+                  onChange={handleInputChange}
                   placeholder={getPlaceholder()}
                   step={getInputStep()}
                   style={{
@@ -395,8 +426,8 @@ const AnomaliesList = () => {
               </div>
             )}
 
-            {/* Поля для диапазона */}
-            {['sumRange', 'etimeRange', 'avgCheckRange'].includes(filterType) && (
+            {/* Поля для диапазона сумм и avgCheck */}
+            {(filterType === 'sumRange' || filterType === 'avgCheckRange') && (
               <>
                 <div style={{ flex: 1 }}>
                   <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>
@@ -426,6 +457,44 @@ const AnomaliesList = () => {
                     onChange={(e) => setRangeMax(e.target.value)}
                     placeholder="Максимум"
                     step={filterType === 'avgCheckRange' ? '0.01' : '1'}
+                    style={{
+                      width: '100%',
+                      padding: '8px',
+                      border: '1px solid #ddd',
+                      borderRadius: '4px'
+                    }}
+                  />
+                </div>
+              </>
+            )}
+
+            {/* Поля для диапазона времени */}
+            {filterType === 'etimeRange' && (
+              <>
+                <div style={{ flex: 1 }}>
+                  <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>
+                    Дата и время (от)
+                  </label>
+                  <input
+                    type="datetime-local"
+                    value={rangeMinDate}
+                    onChange={(e) => setRangeMinDate(e.target.value)}
+                    style={{
+                      width: '100%',
+                      padding: '8px',
+                      border: '1px solid #ddd',
+                      borderRadius: '4px'
+                    }}
+                  />
+                </div>
+                <div style={{ flex: 1 }}>
+                  <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>
+                    Дата и время (до)
+                  </label>
+                  <input
+                    type="datetime-local"
+                    value={rangeMaxDate}
+                    onChange={(e) => setRangeMaxDate(e.target.value)}
                     style={{
                       width: '100%',
                       padding: '8px',
@@ -511,21 +580,16 @@ const AnomaliesList = () => {
               </tr>
             ) : (
               anomalies.map((anomaly) => {
-                // Правильное распределение:
-                // Тип транзакции = из message (Credit/Debit)
                 const transactionType = getTransactionType(anomaly.type)
                 const transactionTypeStyle = getTransactionTypeColor(transactionType)
-                
-                // Тип аномалии = из type (NEGATIVE_M, BIGGER_THEN_AVG_CHECK...)
-                const anomalyTypeStyle = getAnomalyTypeColor(anomaly.type)
-                const anomalyTypeName = getFormattedAnomalyType(anomaly.message)
+                const anomalyTypeStyle = getAnomalyTypeColor(anomaly.message)
+                const anomalyTypeName = getAnomalyTypeName(anomaly.message)
                 
                 return (
                   <tr key={anomaly.anomalyId} style={{ borderBottom: '1px solid #eee' }}>
                     <td style={{ padding: '12px' }}>{anomaly.anomalyId}</td>
                     <td style={{ padding: '12px' }}>{anomaly.userId}</td>
                     
-                    {/* Тип транзакции - Credit/Debit из message */}
                     <td style={{ padding: '12px' }}>
                       <span style={{
                         padding: '4px 8px',
@@ -541,7 +605,6 @@ const AnomaliesList = () => {
                       </span>
                     </td>
                     
-                    {/* Тип аномалии - NEGATIVE_M из type */}
                     <td style={{ padding: '12px' }}>
                       <span style={{
                         padding: '4px 8px',

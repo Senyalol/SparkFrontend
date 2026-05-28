@@ -56,8 +56,17 @@ export const formatMinutes = (minutes) => {
 
 export const dateToTimestamp = (dateStr) => {
   if (!dateStr) return null
-  const date = new Date(dateStr)
-  return Math.floor(date.getTime() / 1000)
+  
+  // Разбираем строку вручную, чтобы избежать проблем с часовым поясом
+  // Ожидаемый формат: "2026-05-28T14:50" (из datetime-local)
+  const [datePart, timePart] = dateStr.split('T')
+  const [year, month, day] = datePart.split('-').map(Number)
+  const [hours, minutes] = timePart.split(':').map(Number)
+  
+  // Создаем дату в локальном времени (без смещения UTC)
+  const localDate = new Date(year, month - 1, day, hours, minutes, 0, 0)
+  
+  return localDate.getTime()  // возвращаем миллисекунды
 }
 
 // Преобразование timestamp в строку для input datetime-local

@@ -3,7 +3,7 @@ import { useNavigate, Link } from 'react-router-dom'
 import { useAuth } from '../../hooks/useAuth'
 
 const Login = () => {
-  const [userToken, setUserToken] = useState('')  // Уникальный токен аналитика
+  const [userToken, setUserToken] = useState('')  // Личный токен пользователя
   const [login, setLogin] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
@@ -16,7 +16,9 @@ const Login = () => {
     setError('')
     setLoading(true)
     
-    const result = await loginUser(userToken, login, password)  // Передаем токен
+    console.log('Login with:', { userToken, login, password })
+    
+    const result = await loginUser(login, password, userToken)
     
     if (result.success) {
       navigate('/dashboard')
@@ -75,9 +77,6 @@ const Login = () => {
               }}
               required
             />
-            <small style={{ color: '#666', fontSize: '12px' }}>
-              Ваш уникальный токен доступа
-            </small>
           </div>
           
           <div style={{ marginBottom: '15px' }}>
@@ -86,7 +85,7 @@ const Login = () => {
               type="text"
               value={login}
               onChange={(e) => setLogin(e.target.value)}
-              placeholder="Введите ваш логин"
+              placeholder="Введите логин"
               style={{
                 width: '100%',
                 padding: '10px',
@@ -104,7 +103,7 @@ const Login = () => {
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              placeholder="Введите ваш пароль"
+              placeholder="Введите пароль"
               style={{
                 width: '100%',
                 padding: '10px',
