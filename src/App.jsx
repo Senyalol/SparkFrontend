@@ -9,6 +9,7 @@ import UserDetail from './pages/Users/UserDetail'
 import SegmentsList from './pages/Segments/SegmentsList'
 import AnomaliesList from './pages/Anomalies/AnomaliesList'
 import SegmentDetail from './pages/Segments/SegmentDetail'
+import AnomalyDetail from './pages/Anomalies/AnomalyDetail'
 
 const ProtectedRoute = ({ children }) => {
   const { isAuthenticated, loading } = useAuth()
@@ -36,6 +37,7 @@ function App() {
           <Route path="users" element={<UsersList />} />
           <Route path="users/:id" element={<UserDetail />} />
           <Route path="segments" element={<SegmentsList />} />
+          <Route path="/anomalies/:id" element={<AnomalyDetail />} />
           <Route path="anomalies" element={<AnomaliesList />} />
           <Route path="segments/:id" element={<SegmentDetail />} />
         </Route>
