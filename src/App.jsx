@@ -70,6 +70,11 @@ function App() {
               <AnalystsList />
             </ProtectedRoute>
           } />
+          <Route path="analysts/:login" element={
+  <ProtectedRoute requireAdmin>
+    <AnalystDetail />
+  </ProtectedRoute>
+} />
           <Route path="analysts/:id" element={
             <ProtectedRoute requireAdmin>
               <AnalystDetail />

@@ -10,7 +10,6 @@ const AdminTokens = () => {
   const [newTokenHours, setNewTokenHours] = useState(24)
   const [generatedToken, setGeneratedToken] = useState(null)
 
-  // Используем useCallback для стабильности функции
   const loadTokens = useCallback(async () => {
     setLoading(true)
     setError('')
@@ -18,13 +17,12 @@ const AdminTokens = () => {
       const data = await adminTokensService.getAllTokens()
       setTokens(data || [])
     } catch (err) {
-      setError(err)
+      setError(typeof err === 'string' ? err : 'Ошибка загрузки токенов')
     } finally {
       setLoading(false)
     }
   }, [])
 
-  // Добавляем loadTokens в зависимости
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     loadTokens()
@@ -32,12 +30,13 @@ const AdminTokens = () => {
 
   const handleGenerateToken = async () => {
     setLoading(true)
+    setError('')
     try {
       const result = await adminTokensService.generateToken(newTokenRole, newTokenHours)
       setGeneratedToken(result)
       await loadTokens()
     } catch (err) {
-      setError(err)
+      setError(typeof err === 'string' ? err : 'Ошибка генерации токена')
     } finally {
       setLoading(false)
     }
@@ -45,22 +44,28 @@ const AdminTokens = () => {
 
   const handleRevokeToken = async (token) => {
     if (window.confirm('Вы уверены, что хотите отменить этот токен?')) {
+      setLoading(true)
       try {
         await adminTokensService.revokeToken(token)
         await loadTokens()
       } catch (err) {
-        setError(err)
+        setError(typeof err === 'string' ? err : 'Ошибка отмены токена')
+      } finally {
+        setLoading(false)
       }
     }
   }
 
   const handleCleanupExpired = async () => {
     if (window.confirm('Удалить все просроченные токены?')) {
+      setLoading(true)
       try {
         await adminTokensService.cleanupExpiredTokens()
         await loadTokens()
       } catch (err) {
-        setError(err)
+        setError(typeof err === 'string' ? err : 'Ошибка очистки токенов')
+      } finally {
+        setLoading(false)
       }
     }
   }
@@ -80,7 +85,11 @@ const AdminTokens = () => {
   }
 
   if (loading && tokens.length === 0) {
-    return <div style={{ textAlign: 'center', marginTop: '50px' }}>Загрузка...</div>
+    return (
+      <div style={{ textAlign: 'center', marginTop: '50px' }}>
+        <div>Загрузка...</div>
+      </div>
+    )
   }
 
   return (
@@ -364,7 +373,7 @@ const AdminTokens = () => {
                     }}>
                       {token.used ? 'Да' : 'Нет'}
                     </span>
-                   </td>
+                  </td>
                   <td style={{ padding: '12px' }}>
                     {!token.used && (
                       <button
@@ -381,7 +390,7 @@ const AdminTokens = () => {
                         Отменить
                       </button>
                     )}
-                   </td>
+                  </td>
                 </tr>
               ))
             )}
