@@ -1,4 +1,6 @@
 import { createContext, useState, useEffect } from 'react'
+import { authService } from '../services/auth'
+import { tokenStorage } from '../utils/tokenStorage'
 
 // eslint-disable-next-line react-refresh/only-export-components
 export const AuthContext = createContext()
@@ -7,42 +9,71 @@ export const AuthProvider = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [user, setUser] = useState(null)
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
 
   useEffect(() => {
-    // Проверка токена при загрузке
-    const token = localStorage.getItem('token')
-    const savedUser = localStorage.getItem('user')
-    
-    if (token && savedUser) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setIsAuthenticated(true)
-      setUser(JSON.parse(savedUser))
-    }
-    setLoading(false)
+    // eslint-disable-next-line react-hooks/immutability
+    checkAuthStatus()
   }, [])
 
-  const login = async (username, password) => {
-    // ВРЕМЕННАЯ ЗАГЛУШКА - потом замените на реальный API
-    if (username === 'admin' && password === 'admin') {
-      const userData = { id: 1, firstName: 'Admin', lastName: 'User' }
-      localStorage.setItem('token', 'fake-token-123')
-      localStorage.setItem('user', JSON.stringify(userData))
-      setIsAuthenticated(true)
-      setUser(userData)
-      return { success: true }
+  const checkAuthStatus = async () => {
+    const accessToken = tokenStorage.getAccessToken()
+    const savedUser = tokenStorage.getUser()
+    
+    if (accessToken && savedUser) {
+      const isValid = await authService.checkAuth()
+      if (isValid) {
+        setIsAuthenticated(true)
+        setUser(savedUser)
+      } else {
+        tokenStorage.clear()
+      }
     }
-    return { success: false, error: 'Неверный логин или пароль' }
+    setLoading(false)
   }
 
-  const logout = () => {
-    localStorage.removeItem('token')
-    localStorage.removeItem('user')
+  const login = async (userToken, login, password) => {
+    setError(null)
+    const result = await authService.login(userToken, login, password)
+    
+    if (result.success) {
+      setIsAuthenticated(true)
+      setUser(result.user)
+      return { success: true }
+    } else {
+      setError(result.error)
+      return { success: false, error: result.error }
+    }
+  }
+
+  const register = async (userToken, login, password) => {
+    setError(null)
+    const result = await authService.register(userToken, login, password)
+    
+    if (result.success) {
+      return { success: true, message: result.message }
+    } else {
+      setError(result.error)
+      return { success: false, error: result.error }
+    }
+  }
+
+  const logout = async () => {
+    await authService.logout()
     setIsAuthenticated(false)
     setUser(null)
   }
 
   return (
-    <AuthContext.Provider value={{ isAuthenticated, user, loading, login, logout }}>
+    <AuthContext.Provider value={{
+      isAuthenticated,
+      user,
+      loading,
+      error,
+      login,
+      register,
+      logout
+    }}>
       {children}
     </AuthContext.Provider>
   )

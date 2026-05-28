@@ -2,6 +2,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import { useAuth } from './hooks/useAuth'
 import Layout from './components/Layout/Layout'
 import Login from './pages/Login/Login'
+import Register from './pages/Register/Register'  // ← ЭТА СТРОКА ДОЛЖНА БЫТЬ!
 import Dashboard from './pages/Dashboard/Dashboard'
 import UsersList from './pages/Users/UsersList'
 import UserDetail from './pages/Users/UserDetail'
@@ -9,7 +10,12 @@ import SegmentsList from './pages/Segments/SegmentsList'
 import AnomaliesList from './pages/Anomalies/AnomaliesList'
 
 const ProtectedRoute = ({ children }) => {
-  const { isAuthenticated } = useAuth()
+  const { isAuthenticated, loading } = useAuth()
+  
+  if (loading) {
+    return <div style={{ textAlign: 'center', marginTop: '50px' }}>Загрузка...</div>
+  }
+  
   return isAuthenticated ? children : <Navigate to="/login" />
 }
 
@@ -18,6 +24,7 @@ function App() {
     <Router>
       <Routes>
         <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<Register />} />  {/* ← ЭТОТ МАРШРУТ ДОЛЖЕН БЫТЬ */}
         <Route path="/" element={
           <ProtectedRoute>
             <Layout />
