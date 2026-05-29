@@ -56,20 +56,6 @@ const AdminTokens = () => {
     }
   }
 
-  const handleCleanupExpired = async () => {
-    if (window.confirm('Удалить все просроченные токены?')) {
-      setLoading(true)
-      try {
-        await adminTokensService.cleanupExpiredTokens()
-        await loadTokens()
-      } catch (err) {
-        setError(typeof err === 'string' ? err : 'Ошибка очистки токенов')
-      } finally {
-        setLoading(false)
-      }
-    }
-  }
-
   const copyToClipboard = (text) => {
     navigator.clipboard.writeText(text)
     alert('Токен скопирован в буфер обмена')
@@ -96,34 +82,19 @@ const AdminTokens = () => {
     <div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', flexWrap: 'wrap', gap: '10px' }}>
         <h1 style={{ fontSize: '24px', fontWeight: 'bold' }}>Управление invite токенами</h1>
-        <div style={{ display: 'flex', gap: '10px' }}>
-          <button
-            onClick={() => setShowGenerateModal(true)}
-            style={{
-              padding: '10px 20px',
-              backgroundColor: '#28a745',
-              color: 'white',
-              border: 'none',
-              borderRadius: '4px',
-              cursor: 'pointer'
-            }}
-          >
-            + Создать токен
-          </button>
-          <button
-            onClick={handleCleanupExpired}
-            style={{
-              padding: '10px 20px',
-              backgroundColor: '#dc3545',
-              color: 'white',
-              border: 'none',
-              borderRadius: '4px',
-              cursor: 'pointer'
-            }}
-          >
-            🗑️ Очистить просроченные
-          </button>
-        </div>
+        <button
+          onClick={() => setShowGenerateModal(true)}
+          style={{
+            padding: '10px 20px',
+            backgroundColor: '#28a745',
+            color: 'white',
+            border: 'none',
+            borderRadius: '4px',
+            cursor: 'pointer'
+          }}
+        >
+          + Создать токен
+        </button>
       </div>
 
       {error && (

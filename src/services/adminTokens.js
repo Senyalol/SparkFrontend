@@ -1,11 +1,10 @@
 import api from './api'
 
 export const adminTokensService = {
-  // Получить все токены
   getAllTokens: async () => {
     try {
-      console.log('📡 [GET] /admin/tokens')
-      const response = await api.get('/admin/tokens')
+      console.log('📡 [GET] /admin/tokens')  // ← без /api
+      const response = await api.get('/admin/tokens')  // ← без /api
       console.log('✅ Tokens loaded:', response.data?.length || 0)
       return response.data
     } catch (error) {
@@ -14,7 +13,6 @@ export const adminTokensService = {
     }
   },
 
-  // Получить токены по статусу использования
   getTokensByUsedStatus: async (used) => {
     try {
       console.log(`📡 [GET] /admin/tokens/used?used=${used}`)
@@ -28,7 +26,6 @@ export const adminTokensService = {
     }
   },
 
-  // Сгенерировать новый токен
   generateToken: async (role, hoursValid) => {
     try {
       const body = {}
@@ -45,11 +42,11 @@ export const adminTokensService = {
     }
   },
 
-  // Сгенерировать токен с параметрами по умолчанию
   generateDefaultToken: async () => {
     try {
       console.log('📡 [POST] /admin/tokens/generate/default')
       const response = await api.post('/admin/tokens/generate/default')
+      console.log('✅ Default token generated:', response.data)
       return response.data
     } catch (error) {
       console.error('Generate default token error:', error)
@@ -57,7 +54,6 @@ export const adminTokensService = {
     }
   },
 
-  // Отменить токен
   revokeToken: async (token) => {
     try {
       console.log(`📡 [DELETE] /admin/tokens/revoke?token=${token}`)
@@ -69,19 +65,6 @@ export const adminTokensService = {
     } catch (error) {
       console.error('❌ Revoke token error:', error)
       throw error.response?.data?.message || 'Ошибка отмены токена'
-    }
-  },
-
-  // Очистить просроченные токены
-  cleanupExpiredTokens: async () => {
-    try {
-      console.log('📡 [DELETE] /admin/tokens/expired')
-      const response = await api.delete('/admin/tokens/expired')
-      console.log('✅ Cleanup expired:', response.data)
-      return response.data
-    } catch (error) {
-      console.error('❌ Cleanup expired tokens error:', error)
-      throw error.response?.data?.message || 'Ошибка очистки токенов'
     }
   }
 }
