@@ -3,12 +3,16 @@ import { adminTokensService } from '../../services/adminTokens'
 
 const AdminTokens = () => {
   const [tokens, setTokens] = useState([])
+  const [filteredTokens, setFilteredTokens] = useState([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [showGenerateModal, setShowGenerateModal] = useState(false)
   const [newTokenRole, setNewTokenRole] = useState('ANALYST')
   const [newTokenHours, setNewTokenHours] = useState(24)
   const [generatedToken, setGeneratedToken] = useState(null)
+  
+  // Фильтр по использованию
+  const [usedFilter, setUsedFilter] = useState('ALL') // 'ALL', 'USED', 'NOT_USED'
 
   const loadTokens = useCallback(async () => {
     setLoading(true)
@@ -16,6 +20,7 @@ const AdminTokens = () => {
     try {
       const data = await adminTokensService.getAllTokens()
       setTokens(data || [])
+      setFilteredTokens(data || [])
     } catch (err) {
       setError(typeof err === 'string' ? err : 'Ошибка загрузки токенов')
     } finally {
@@ -27,6 +32,20 @@ const AdminTokens = () => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     loadTokens()
   }, [loadTokens])
+
+  // Применение фильтра по использованию
+  useEffect(() => {
+    let result = [...tokens]
+    
+    if (usedFilter === 'USED') {
+      result = result.filter(token => token.used === true)
+    } else if (usedFilter === 'NOT_USED') {
+      result = result.filter(token => token.used === false)
+    }
+    
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setFilteredTokens(result)
+  }, [usedFilter, tokens])
 
   const handleGenerateToken = async () => {
     setLoading(true)
@@ -95,6 +114,68 @@ const AdminTokens = () => {
         >
           + Создать токен
         </button>
+      </div>
+
+      {/* Фильтр по использованию */}
+      <div style={{
+        backgroundColor: 'white',
+        padding: '15px 20px',
+        borderRadius: '8px',
+        marginBottom: '20px',
+        boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+        display: 'flex',
+        alignItems: 'center',
+        gap: '15px',
+        flexWrap: 'wrap'
+      }}>
+        <label style={{ fontWeight: 'bold' }}>Статус использования:</label>
+        <div style={{ display: 'flex', gap: '10px' }}>
+          <button
+            onClick={() => setUsedFilter('ALL')}
+            style={{
+              padding: '6px 16px',
+              backgroundColor: usedFilter === 'ALL' ? '#007bff' : '#e9ecef',
+              color: usedFilter === 'ALL' ? 'white' : '#495057',
+              border: 'none',
+              borderRadius: '20px',
+              cursor: 'pointer',
+              fontSize: '14px'
+            }}
+          >
+            Все
+          </button>
+          <button
+            onClick={() => setUsedFilter('NOT_USED')}
+            style={{
+              padding: '6px 16px',
+              backgroundColor: usedFilter === 'NOT_USED' ? '#28a745' : '#e9ecef',
+              color: usedFilter === 'NOT_USED' ? 'white' : '#495057',
+              border: 'none',
+              borderRadius: '20px',
+              cursor: 'pointer',
+              fontSize: '14px'
+            }}
+          >
+            Не использован
+          </button>
+          <button
+            onClick={() => setUsedFilter('USED')}
+            style={{
+              padding: '6px 16px',
+              backgroundColor: usedFilter === 'USED' ? '#dc3545' : '#e9ecef',
+              color: usedFilter === 'USED' ? 'white' : '#495057',
+              border: 'none',
+              borderRadius: '20px',
+              cursor: 'pointer',
+              fontSize: '14px'
+            }}
+          >
+            Использован
+          </button>
+        </div>
+        <div style={{ marginLeft: 'auto', fontSize: '14px', color: '#666' }}>
+          Найдено: {filteredTokens.length} из {tokens.length}
+        </div>
       </div>
 
       {error && (
@@ -282,19 +363,19 @@ const AdminTokens = () => {
               <th style={{ padding: '12px', textAlign: 'left' }}>Роль</th>
               <th style={{ padding: '12px', textAlign: 'left' }}>Создан</th>
               <th style={{ padding: '12px', textAlign: 'left' }}>Истекает</th>
-              <th style={{ padding: '12px', textAlign: 'left' }}>Использован</th>
+              <th style={{ padding: '12px', textAlign: 'left' }}>Статус</th>
               <th style={{ padding: '12px', textAlign: 'left' }}>Действия</th>
             </tr>
           </thead>
           <tbody>
-            {tokens.length === 0 ? (
+            {filteredTokens.length === 0 ? (
               <tr>
                 <td colSpan="6" style={{ padding: '40px', textAlign: 'center', color: '#666' }}>
-                  Нет токенов
+                  {tokens.length === 0 ? 'Нет токенов' : 'Токены не найдены по заданным критериям'}
                 </td>
               </tr>
             ) : (
-              tokens.map((token, index) => (
+              filteredTokens.map((token, index) => (
                 <tr key={token.id || token.token || index} style={{ borderBottom: '1px solid #eee' }}>
                   <td style={{ padding: '12px' }}>
                     <code style={{
@@ -317,6 +398,7 @@ const AdminTokens = () => {
                         borderRadius: '4px',
                         cursor: 'pointer'
                       }}
+                      title="Копировать токен"
                     >
                       📋
                     </button>

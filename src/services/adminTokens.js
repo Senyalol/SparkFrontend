@@ -1,10 +1,10 @@
-import api from './api'
+import adminApi from './adminApi'
 
 export const adminTokensService = {
   getAllTokens: async () => {
     try {
-      console.log('📡 [GET] /admin/tokens')  // ← без /api
-      const response = await api.get('/admin/tokens')  // ← без /api
+      console.log('📡 [GET] /admin/tokens')
+      const response = await adminApi.get('/admin/tokens')  // ← используем adminApi
       console.log('✅ Tokens loaded:', response.data?.length || 0)
       return response.data
     } catch (error) {
@@ -16,7 +16,7 @@ export const adminTokensService = {
   getTokensByUsedStatus: async (used) => {
     try {
       console.log(`📡 [GET] /admin/tokens/used?used=${used}`)
-      const response = await api.get('/admin/tokens/used', {
+      const response = await adminApi.get('/admin/tokens/used', {
         params: { used: used }
       })
       return response.data
@@ -33,7 +33,7 @@ export const adminTokensService = {
       if (hoursValid) body.hoursValid = hoursValid
       
       console.log('📡 [POST] /admin/tokens/generate', body)
-      const response = await api.post('/admin/tokens/generate', body)
+      const response = await adminApi.post('/admin/tokens/generate', body)
       console.log('✅ Token generated:', response.data)
       return response.data
     } catch (error) {
@@ -45,7 +45,7 @@ export const adminTokensService = {
   generateDefaultToken: async () => {
     try {
       console.log('📡 [POST] /admin/tokens/generate/default')
-      const response = await api.post('/admin/tokens/generate/default')
+      const response = await adminApi.post('/admin/tokens/generate/default')
       console.log('✅ Default token generated:', response.data)
       return response.data
     } catch (error) {
@@ -57,7 +57,7 @@ export const adminTokensService = {
   revokeToken: async (token) => {
     try {
       console.log(`📡 [DELETE] /admin/tokens/revoke?token=${token}`)
-      const response = await api.delete('/admin/tokens/revoke', {
+      const response = await adminApi.delete('/admin/tokens/revoke', {
         params: { token: token }
       })
       console.log('✅ Token revoked:', response.data)

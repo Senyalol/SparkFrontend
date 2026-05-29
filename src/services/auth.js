@@ -159,15 +159,16 @@ export const authService = {
     try {
       const token = tokenStorage.getAccessToken()
       if (token) {
-        await api.get('/analyst/exit')
+        // await api.get('/analyst/exit')
+        localStorage.clear()
         console.log('✅ [LOGOUT] Success')
       }
     } catch (error) {
       console.error('❌ [LOGOUT] Error:', error)
     } finally {
-      tokenStorage.clear()
-      console.log('🗑️ [LOGOUT] Storage cleared')
-    }
+      localStorage.clear()  // ← удаляет ВСЁ
+      console.log('🗑️ [LOGOUT] All localStorage cleared')
+  }
   },
 
   // Обновление токена
