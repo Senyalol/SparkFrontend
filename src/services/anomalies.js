@@ -25,9 +25,10 @@ export const anomaliesService = {
     }
   },
 
-  // Получить аномалии по типу
+  // Получить аномалии по типу (принимает enum: NEGATIVE_M, BIGGER_THEN_AVG_CHECK и т.д.)
   getAnomaliesByType: async (type) => {
     try {
+      console.log('📡 [GET] /anomaly/type', { type })
       const response = await api.get('/anomaly/type', {
         params: { type: type }
       })
@@ -88,9 +89,8 @@ export const anomaliesService = {
     }
   },
 
-  // ========== ФИЛЬТРЫ ПО ВРЕМЕНИ С LocalDateTime (НОВЫЕ МЕТОДЫ) ==========
+  // ========== ФИЛЬТРЫ ПО ВРЕМЕНИ С LocalDateTime ==========
   
-  // В диапазоне дат (использует /time/range)
   getAnomaliesByTimeRange: async (min, max) => {
     try {
       console.log('📡 [GET] /anomaly/time/range', { min, max })
@@ -104,7 +104,6 @@ export const anomaliesService = {
     }
   },
 
-  // После даты (использует /time/more)
   getAnomaliesByTimeMore: async (max) => {
     try {
       console.log('📡 [GET] /anomaly/time/more', { max })
@@ -118,7 +117,6 @@ export const anomaliesService = {
     }
   },
 
-  // До даты (использует /time/less)
   getAnomaliesByTimeLess: async (min) => {
     try {
       console.log('📡 [GET] /anomaly/time/less', { min })
