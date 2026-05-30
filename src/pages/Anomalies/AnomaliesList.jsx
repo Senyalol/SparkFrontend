@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { anomaliesService } from '../../services/anomalies'
-import { formatDateTime, dateToTimestamp } from '../../utils/dateFormatter'
+import { formatDateTime, dateToLocalDateTime } from '../../utils/dateFormatter'
 
 const AnomaliesList = () => {
   const navigate = useNavigate()
@@ -197,12 +197,12 @@ const AnomaliesList = () => {
           }
           break
         
-        // ========== ФИЛЬТРЫ ПО ВРЕМЕНИ С DATETIME-LOCAL ==========
+        // ========== ФИЛЬТРЫ ПО ВРЕМЕНИ С LocalDateTime (НОВЫЕ МЕТОДЫ) ==========
         case 'etimeMore':
           if (dateValue) {
-            const timestamp = dateToTimestamp(dateValue)
-            if (timestamp) {
-              data = await anomaliesService.getAnomaliesByMaxEventTime(timestamp)
+            const localDateTime = dateToLocalDateTime(dateValue)
+            if (localDateTime) {
+              data = await anomaliesService.getAnomaliesByTimeMore(localDateTime)
             } else {
               setError('Введите корректную дату и время')
               setLoading(false)
@@ -213,9 +213,9 @@ const AnomaliesList = () => {
         
         case 'etimeLess':
           if (dateValue) {
-            const timestamp = dateToTimestamp(dateValue)
-            if (timestamp) {
-              data = await anomaliesService.getAnomaliesByMinEventTime(timestamp)
+            const localDateTime = dateToLocalDateTime(dateValue)
+            if (localDateTime) {
+              data = await anomaliesService.getAnomaliesByTimeLess(localDateTime)
             } else {
               setError('Введите корректную дату и время')
               setLoading(false)
@@ -226,15 +226,15 @@ const AnomaliesList = () => {
         
         case 'etimeRange':
           if (rangeMinDate && rangeMaxDate) {
-            const minTimestamp = dateToTimestamp(rangeMinDate)
-            const maxTimestamp = dateToTimestamp(rangeMaxDate)
-            if (minTimestamp && maxTimestamp) {
-              if (minTimestamp > maxTimestamp) {
+            const minDateTime = dateToLocalDateTime(rangeMinDate)
+            const maxDateTime = dateToLocalDateTime(rangeMaxDate)
+            if (minDateTime && maxDateTime) {
+              if (minDateTime > maxDateTime) {
                 setError('Начальная дата не может быть позже конечной')
                 setLoading(false)
                 return
               }
-              data = await anomaliesService.getAnomaliesByEventTimeRange(minTimestamp, maxTimestamp)
+              data = await anomaliesService.getAnomaliesByTimeRange(minDateTime, maxDateTime)
             } else {
               setError('Введите корректные дату и время')
               setLoading(false)

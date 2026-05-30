@@ -88,46 +88,52 @@ export const anomaliesService = {
     }
   },
 
-  // Фильтрация по времени (eventTime)
-  getAnomaliesByEventTimeRange: async (min, max) => {
+  // ========== ФИЛЬТРЫ ПО ВРЕМЕНИ С LocalDateTime (НОВЫЕ МЕТОДЫ) ==========
+  
+  // В диапазоне дат (использует /time/range)
+  getAnomaliesByTimeRange: async (min, max) => {
     try {
-      const response = await api.get('/anomaly/etime/range', {
+      console.log('📡 [GET] /anomaly/time/range', { min, max })
+      const response = await api.get('/anomaly/time/range', {
         params: { min: min, max: max }
       })
       return response.data
     } catch (error) {
-      console.error('Get anomalies by event time range error:', error)
+      console.error('Get anomalies by time range error:', error)
       throw error.response?.data?.message || 'Ошибка фильтрации по времени (диапазон)'
     }
   },
 
-  getAnomaliesByMaxEventTime: async (max) => {
+  // После даты (использует /time/more)
+  getAnomaliesByTimeMore: async (max) => {
     try {
-      const response = await api.get('/anomaly/etime/more', {
+      console.log('📡 [GET] /anomaly/time/more', { max })
+      const response = await api.get('/anomaly/time/more', {
         params: { max: max }
       })
       return response.data
     } catch (error) {
-      console.error('Get anomalies by event time more error:', error)
+      console.error('Get anomalies by time more error:', error)
       throw error.response?.data?.message || 'Ошибка фильтрации по времени >'
     }
   },
 
-  getAnomaliesByMinEventTime: async (min) => {
+  // До даты (использует /time/less)
+  getAnomaliesByTimeLess: async (min) => {
     try {
-      const response = await api.get('/anomaly/etime/less', {
+      console.log('📡 [GET] /anomaly/time/less', { min })
+      const response = await api.get('/anomaly/time/less', {
         params: { min: min }
       })
       return response.data
     } catch (error) {
-      console.error('Get anomalies by event time less error:', error)
+      console.error('Get anomalies by time less error:', error)
       throw error.response?.data?.message || 'Ошибка фильтрации по времени <'
     }
   },
 
   // ========== МЕТОДЫ ДЛЯ avgCheck ==========
   
-  // avgCheck > значение (использует существующий /avg-check с одним параметром min)
   getAnomaliesByAvgCheckMore: async (check) => {
     try {
       const response = await api.get('/anomaly/avg-check', {
@@ -140,7 +146,6 @@ export const anomaliesService = {
     }
   },
 
-  // avgCheck < значение (использует новый эндпоинт /avg-check/less)
   getAnomaliesByAvgCheckLess: async (check) => {
     try {
       const response = await api.get('/anomaly/avg-check/less', {
@@ -153,7 +158,6 @@ export const anomaliesService = {
     }
   },
 
-  // avgCheck в диапазоне (использует существующий /avg-check с min и max)
   getAnomaliesByAvgCheckRange: async (min, max) => {
     try {
       const response = await api.get('/anomaly/avg-check', {

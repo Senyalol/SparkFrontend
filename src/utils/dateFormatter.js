@@ -1,28 +1,59 @@
-/**
- * Форматирует минуты в человеко-читаемый формат
- * @param {string|number} minutes - минуты (может быть строкой "887.63" или числом)
- * @returns {string} отформатированная строка
- */
+// Преобразование даты из input datetime-local в формат LocalDateTime для API
+export const dateToLocalDateTime = (dateString) => {
+  if (!dateString) return null
+  // input datetime-local возвращает "2024-01-15T10:30"
+  // Добавляем секунды, если их нет
+  let formatted = dateString
+  if (formatted.length === 16) {
+    formatted = `${formatted}:00`
+  }
+  console.log(`📅 Date conversion: ${dateString} -> ${formatted}`)
+  return formatted
+}
 
+// Форматирование даты из строки в читаемый вид
+export const formatDateTime = (timestamp) => {
+  if (!timestamp) return '—'
+  try {
+    const date = new Date(timestamp)
+    return date.toLocaleString('ru-RU', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    })
+  } catch {
+    return timestamp
+  }
+}
+
+// Старая функция для timestamp (оставляем на всякий случай)
+export const dateToTimestamp = (dateString) => {
+  if (!dateString) return null
+  const date = new Date(dateString)
+  const timestamp = date.getTime()
+  console.log(`📅 Date conversion: ${dateString} -> ${timestamp}`)
+  return timestamp
+}
+
+// Форматирует минуты в человеко-читаемый формат
 export const formatMinutes = (minutes) => {
   if (!minutes) return '—'
   
   const totalMinutes = parseFloat(minutes)
   if (isNaN(totalMinutes)) return '—'
   
-  // Секунды (меньше 1 минуты)
   if (totalMinutes < 1) {
     const seconds = (totalMinutes * 60).toFixed(0)
     return `${seconds} сек.`
   }
   
-  // Минуты (меньше 60)
   if (totalMinutes < 60) {
     const mins = Math.floor(totalMinutes)
     return `${mins} мин.`
   }
   
-  // Часы и минуты (меньше 24 часов = 1440 минут)
   if (totalMinutes < 1440) {
     const hours = Math.floor(totalMinutes / 60)
     const remainingMins = Math.round(totalMinutes % 60)
@@ -33,7 +64,6 @@ export const formatMinutes = (minutes) => {
     return `${hours} ч. ${remainingMins} мин.`
   }
   
-  // Дни, часы и минуты (больше 24 часов)
   const days = Math.floor(totalMinutes / 1440)
   const remainingHoursMinutes = totalMinutes % 1440
   const hours = Math.floor(remainingHoursMinutes / 60)
@@ -54,74 +84,12 @@ export const formatMinutes = (minutes) => {
   return `${days} дн. ${hours} ч. ${mins} мин.`
 }
 
-export const dateToTimestamp = (dateStr) => {
-  if (!dateStr) return null
-  
-  // Разбираем строку вручную, чтобы избежать проблем с часовым поясом
-  // Ожидаемый формат: "2026-05-28T14:50" (из datetime-local)
-  const [datePart, timePart] = dateStr.split('T')
-  const [year, month, day] = datePart.split('-').map(Number)
-  const [hours, minutes] = timePart.split(':').map(Number)
-  
-  // Создаем дату в локальном времени (без смещения UTC)
-  const localDate = new Date(year, month - 1, day, hours, minutes, 0, 0)
-  
-  return localDate.getTime()  // возвращаем миллисекунды
-}
-
-// Преобразование timestamp в строку для input datetime-local
-export const timestampToDateTimeLocal = (timestamp) => {
-  if (!timestamp) return ''
-  const date = new Date(timestamp * 1000)
-  const year = date.getFullYear()
-  const month = String(date.getMonth() + 1).padStart(2, '0')
-  const day = String(date.getDate()).padStart(2, '0')
-  const hours = String(date.getHours()).padStart(2, '0')
-  const minutes = String(date.getMinutes()).padStart(2, '0')
-  return `${year}-${month}-${day}T${hours}:${minutes}`
-}
-
-// Получить текущий timestamp (секунды)
-export const getCurrentTimestamp = () => {
-  return Math.floor(Date.now() / 1000)
-}
-
-/**
- * Получает числовое значение минут для расчетов (фильтрации)
- * @param {string|number} minutes - минуты
- * @returns {number} число минут
- */
 export const getMinutesValue = (minutes) => {
   if (!minutes) return 0
   const parsedMinutes = parseFloat(minutes)
   return isNaN(parsedMinutes) ? 0 : parsedMinutes
 }
 
-// Форматирование даты из строки "2026-05-21 15:09:16" в читаемый вид
-export const formatDateTime = (dateTimeStr) => {
-  if (!dateTimeStr) return '—'
-  return dateTimeStr.replace(' ', '\u00A0') // неразрывный пробел между датой и временем
-}
-
-// Если нужно форматировать timestamp
-export const formatTimestamp = (timestamp) => {
-  if (!timestamp) return '—'
-  const date = new Date(timestamp)
-  return date.toLocaleString('ru-RU', {
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit',
-    second: '2-digit'
-  })
-}
-
-/**
- * Форматирует дату
- * @param {string} dateString - строка с датой
- * @returns {string} отформатированная дата
- */
 export const formatDate = (dateString) => {
   if (!dateString) return '—'
   try {
@@ -139,5 +107,4 @@ export const formatDate = (dateString) => {
   } catch {
     return dateString
   }
-  
 }
