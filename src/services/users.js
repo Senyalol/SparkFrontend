@@ -1,7 +1,7 @@
 import api from './api'
 
 export const usersService = {
-  // Получить всех пользователей
+  
   getAllUsers: async () => {
     try {
       const response = await api.get('/users')
@@ -12,7 +12,7 @@ export const usersService = {
     }
   },
 
-  // Получить пользователя по ID
+  
   getUserById: async (id) => {
     try {
       const response = await api.get('/users/id', {
@@ -25,7 +25,7 @@ export const usersService = {
     }
   },
 
-  // Найти пользователей по имени
+  
   getUserByName: async (name) => {
     try {
       const response = await api.get('/users/name', {
@@ -38,7 +38,7 @@ export const usersService = {
     }
   },
 
-  // Найти пользователей по фамилии
+  
   getUserByLastName: async (lastName) => {
     try {
       const response = await api.get('/users/lastname', {

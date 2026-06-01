@@ -19,9 +19,9 @@ const SegmentsList = () => {
   // ========== ФУНКЦИИ ДЛЯ ДИНАМИЧЕСКОГО ТИПА ПОЛЯ ==========
   // Определяет тип поля ввода (текст или число)
   const getInputType = () => {
-    if (filterType === 'userId') return 'number'      // ID пользователя - число
-    if (filterType === 'username') return 'text'      // ФИО - ТЕКСТ
-    if (filterType === 'segmentType') return 'text'   // Тип сегмента - ТЕКСТ
+    if (filterType === 'userId') return 'number'      
+    if (filterType === 'username') return 'text'      
+    if (filterType === 'segmentType') return 'text'   
     return 'number'  // R, F, M - числа
   }
 
@@ -64,7 +64,7 @@ const SegmentsList = () => {
         
         case 'username':
           if (searchValue && searchValue.trim()) {
-            // Разделяем фамилию и имя
+            
             const parts = searchValue.trim().split(' ')
             const lastname = parts[0]
             const name = parts.length > 1 ? parts[1] : null

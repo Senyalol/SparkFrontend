@@ -36,7 +36,7 @@ const AnalystDetail = () => {
     setLoading(true)
     setError('')
     try {
-      // 1. Получаем ID по логину
+      
       console.log('Step 1: Getting ID for login:', login)
       const id = await analystsService.getAnalystIdByLogin(login)
       console.log('Step 1 result - ID:', id, 'Type:', typeof id)
@@ -47,7 +47,6 @@ const AnalystDetail = () => {
       
       setAnalystId(id)
       
-      // 2. Получаем данные аналитика по ID
       console.log('Step 2: Getting analyst data by ID:', id)
       const data = await analystsService.getAnalystById(id)
       console.log('Step 2 result - Analyst:', data)
@@ -216,7 +215,7 @@ const AnalystDetail = () => {
                   cursor: 'pointer'
                 }}
               >
-                ✏️ Редактировать
+                Редактировать
               </button>
             )}
             <button
@@ -230,7 +229,7 @@ const AnalystDetail = () => {
                 cursor: 'pointer'
               }}
             >
-              🗑️ Удалить
+              Удалить
             </button>
           </div>
         </div>

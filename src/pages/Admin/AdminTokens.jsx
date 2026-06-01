@@ -11,8 +11,7 @@ const AdminTokens = () => {
   const [newTokenHours, setNewTokenHours] = useState(24)
   const [generatedToken, setGeneratedToken] = useState(null)
   
-  // Фильтр по использованию
-  const [usedFilter, setUsedFilter] = useState('ALL') // 'ALL', 'USED', 'NOT_USED'
+  const [usedFilter, setUsedFilter] = useState('ALL') 
 
   const loadTokens = useCallback(async () => {
     setLoading(true)
@@ -33,7 +32,6 @@ const AdminTokens = () => {
     loadTokens()
   }, [loadTokens])
 
-  // Применение фильтра по использованию
   useEffect(() => {
     let result = [...tokens]
     
@@ -116,7 +114,7 @@ const AdminTokens = () => {
         </button>
       </div>
 
-      {/* Фильтр по использованию */}
+      
       <div style={{
         backgroundColor: 'white',
         padding: '15px 20px',
@@ -190,7 +188,6 @@ const AdminTokens = () => {
         </div>
       )}
 
-      {/* Модальное окно создания токена */}
       {showGenerateModal && (
         <div style={{
           position: 'fixed',
@@ -290,7 +287,7 @@ const AdminTokens = () => {
                   borderRadius: '4px',
                   marginBottom: '20px'
                 }}>
-                  ✅ Токен успешно создан!
+
                 </div>
 
                 <div style={{ marginBottom: '15px' }}>
@@ -349,7 +346,6 @@ const AdminTokens = () => {
         </div>
       )}
 
-      {/* Таблица токенов */}
       <div style={{
         backgroundColor: 'white',
         borderRadius: '8px',
@@ -400,7 +396,7 @@ const AdminTokens = () => {
                       }}
                       title="Копировать токен"
                     >
-                      📋
+                      
                     </button>
                   </td>
                   <td style={{ padding: '12px' }}>

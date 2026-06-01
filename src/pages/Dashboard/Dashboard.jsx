@@ -30,9 +30,13 @@ const Dashboard = () => {
       setSegmentsCount(segmentsData?.length || 0)
       setAnomaliesCount(anomaliesData?.length || 0)
       
-      // Последние 5 аномалий
-      const recent = (anomaliesData || []).slice(0, 5)
-      setRecentAnomalies(recent)
+      // Сортируем по времени и берем последние 5
+      const sorted = (anomaliesData || []).sort((a, b) => {
+        const timeA = new Date(a.eventTime).getTime()
+        const timeB = new Date(b.eventTime).getTime()
+        return timeB - timeA
+      })
+      setRecentAnomalies(sorted.slice(0, 5))
     } catch (error) {
       console.error('Failed to load stats:', error)
     } finally {
@@ -40,9 +44,9 @@ const Dashboard = () => {
     }
   }
 
-  // Функция для человеко-читаемого названия типа аномалии
-  const getAnomalyTypeName = (type) => {
-    switch (type) {
+ 
+  const getAnomalyTypeName = (message) => {
+    switch (message) {
       case 'BIGGER_THEN_AVG_CHECK':
         return 'Превышение среднего чека'
       case 'NEGATIVE_M':
@@ -54,13 +58,13 @@ const Dashboard = () => {
       case 'EXCESSIVE_REVERSAL_PATTERN':
         return 'Подозрительный возврат'
       default:
-        return type?.replace(/_/g, ' ') || 'Неизвестный тип'
+        return message?.replace(/_/g, ' ') || 'Неизвестный тип'
     }
   }
 
-  // Функция для получения цвета типа аномалии
-  const getAnomalyTypeColor = (type) => {
-    switch (type) {
+  
+  const getAnomalyTypeColor = (message) => {
+    switch (message) {
       case 'BIGGER_THEN_AVG_CHECK':
         return '#ff9800'
       case 'NEGATIVE_M':
@@ -76,19 +80,35 @@ const Dashboard = () => {
     }
   }
 
-  // Функция для определения типа транзакции из сообщения
-  const getTransactionType = (message) => {
-    if (!message) return '—'
-    if (message.includes('Credit') || message.includes('DEPOSIT')) return '💰 Пополнение'
-    if (message.includes('Debit') || message.includes('WITHDRAW')) return '💸 Списание'
-    if (message.includes('REVERSAL')) return '🔄 Возврат'
-    return message
+  const getTransactionTypeName = (type) => {
+    if (!type) return '—'
+    if (type === 'Credit') return ' Пополнение'
+    if (type === 'Debit') return ' Списание'
+    if (type === 'DEPOSIT') return ' Депозит'
+    if (type === 'WITHDRAW') return ' Вывод'
+    if (type === 'REVERSAL') return ' Возврат'
+    return type
+  }
+
+  const formatDateTime = (eventTime) => {
+    if (!eventTime) return '—'
+    try {
+      const date = new Date(eventTime)
+      return date.toLocaleString('ru-RU', {
+        day: '2-digit',
+        month: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit'
+      })
+    } catch {
+      return eventTime
+    }
   }
 
   const stats = [
-    { title: 'Пользователи', value: usersCount, color: '#007bff', link: '/users', icon: '👥' },
-    { title: 'Сегменты', value: segmentsCount, color: '#28a745', link: '/segments', icon: '🏷️' },
-    { title: 'Аномалии', value: anomaliesCount, color: '#dc3545', link: '/anomalies', icon: '⚠️' },
+    { title: 'Пользователи', value: usersCount, color: '#007bff', link: '/users'},
+    { title: 'Сегменты', value: segmentsCount, color: '#28a745', link: '/segments' },
+    { title: 'Аномалии', value: anomaliesCount, color: '#dc3545', link: '/anomalies' },
   ]
 
   return (
@@ -100,7 +120,6 @@ const Dashboard = () => {
         Аналитическая платформа BankSpark — мониторинг транзакций и аномалий
       </p>
 
-      {/* Статистика */}
       <div style={{
         display: 'grid',
         gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
@@ -140,14 +159,13 @@ const Dashboard = () => {
         ))}
       </div>
 
-      {/* Две колонки: последние аномалии + быстрые действия */}
       <div style={{
         display: 'grid',
         gridTemplateColumns: '1fr 1fr',
         gap: '20px',
         marginBottom: '30px'
       }}>
-        {/* Последние аномалии */}
+        {/* Левая колонка - последние аномалии */}
         <div style={{
           backgroundColor: 'white',
           borderRadius: '8px',
@@ -156,7 +174,7 @@ const Dashboard = () => {
         }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
             <h3 style={{ fontSize: '18px', fontWeight: 'bold', margin: 0 }}>
-              ⚠️ Последние аномалии
+              Последние аномалии
             </h3>
             <button
               onClick={() => navigate('/anomalies')}
@@ -194,7 +212,7 @@ const Dashboard = () => {
                     borderRadius: '6px',
                     cursor: 'pointer',
                     transition: 'background-color 0.2s',
-                    borderLeft: `3px solid ${getAnomalyTypeColor(anomaly.type)}`
+                    borderLeft: `3px solid ${getAnomalyTypeColor(anomaly.message)}`
                   }}
                   onMouseEnter={(e) => {
                     e.currentTarget.style.backgroundColor = '#e9ecef'
@@ -209,22 +227,19 @@ const Dashboard = () => {
                       borderRadius: '4px',
                       fontSize: '11px',
                       fontWeight: 'bold',
-                      backgroundColor: getAnomalyTypeColor(anomaly.type),
+                      backgroundColor: getAnomalyTypeColor(anomaly.message),
                       color: 'white'
                     }}>
-                      {getAnomalyTypeName(anomaly.type)}
+                      {getAnomalyTypeName(anomaly.message)}
                     </span>
                     <span style={{ fontSize: '12px', color: '#666' }}>
-                      {anomaly.eventTime?.split(' ')[0]}
+                      {formatDateTime(anomaly.eventTime)}
                     </span>
                   </div>
                   <div style={{ fontSize: '13px', color: '#333', marginTop: '5px' }}>
-                    <strong>Пользователь #{anomaly.userId}</strong>
+                    <strong>Пользователь #{anomaly.userId}</strong> — {getTransactionTypeName(anomaly.type)}
                   </div>
-                  <div style={{ fontSize: '12px', color: '#666', marginTop: '5px' }}>
-                    Тип транзакции: {getTransactionType(anomaly.message)}
-                  </div>
-                  <div style={{ fontSize: '12px', color: '#666' }}>
+                  <div style={{ fontSize: '13px', color: '#666', marginTop: '5px' }}>
                     Сумма: <strong>{anomaly.sum?.toFixed(2) || '0'} ₽</strong>
                   </div>
                 </div>
@@ -233,7 +248,7 @@ const Dashboard = () => {
           )}
         </div>
 
-        {/* Быстрые действия */}
+        {/* Правая колонка - быстрые действия */}
         <div style={{
           backgroundColor: 'white',
           borderRadius: '8px',
@@ -241,7 +256,7 @@ const Dashboard = () => {
           boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
         }}>
           <h3 style={{ marginBottom: '15px', fontSize: '18px', fontWeight: 'bold' }}>
-            🚀 Быстрые действия
+             Быстрые действия
           </h3>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
             <button
@@ -260,7 +275,7 @@ const Dashboard = () => {
               onMouseEnter={(e) => e.currentTarget.style.opacity = '0.9'}
               onMouseLeave={(e) => e.currentTarget.style.opacity = '1'}
             >
-              👥 Управление пользователями
+               Управление пользователями
             </button>
             <button
               onClick={() => navigate('/segments')}
@@ -278,7 +293,7 @@ const Dashboard = () => {
               onMouseEnter={(e) => e.currentTarget.style.opacity = '0.9'}
               onMouseLeave={(e) => e.currentTarget.style.opacity = '1'}
             >
-              🏷️ Анализ сегментов
+              Анализ сегментов
             </button>
             <button
               onClick={() => navigate('/anomalies')}
@@ -296,11 +311,10 @@ const Dashboard = () => {
               onMouseEnter={(e) => e.currentTarget.style.opacity = '0.9'}
               onMouseLeave={(e) => e.currentTarget.style.opacity = '1'}
             >
-              ⚠️ Просмотр аномалий
+              Просмотр аномалий
             </button>
           </div>
 
-          {/* Дополнительная информация */}
           <div style={{
             marginTop: '20px',
             padding: '12px',
@@ -309,13 +323,13 @@ const Dashboard = () => {
             fontSize: '12px',
             color: '#666'
           }}>
-            <div>📊 <strong>Что означают типы аномалий:</strong></div>
+            <div><strong>Что означают типы аномалий:</strong></div>
             <ul style={{ margin: '8px 0 0 20px', padding: 0 }}>
-              <li>🔸 <span style={{ color: '#ff9800' }}>Превышение среднего чека</span> — сумма операции значительно выше обычной</li>
-              <li>🔸 <span style={{ color: '#f44336' }}>Отрицательный баланс</span> — списание больше доступных средств</li>
-              <li>🔸 <span style={{ color: '#2196f3' }}>Частые крупные пополнения</span> — подозрительная активность</li>
-              <li>🔸 <span style={{ color: '#9c27b0' }}>Структурирование</span> — дробление транзакций</li>
-              <li>🔸 <span style={{ color: '#e91e63' }}>Подозрительный возврат</span> — депозит и сразу кредит</li>
+              <li><span style={{ color: '#ff9800' }}>Превышение среднего чека</span> — сумма операции значительно выше обычной</li>
+              <li><span style={{ color: '#f44336' }}>Отрицательный баланс</span> — списание больше доступных средств</li>
+              <li><span style={{ color: '#2196f3' }}>Частые крупные пополнения</span> — подозрительная активность</li>
+              <li><span style={{ color: '#9c27b0' }}>Структурирование</span> — дробление транзакций</li>
+              <li><span style={{ color: '#e91e63' }}>Подозрительный возврат</span> — депозит и сразу кредит</li>
             </ul>
           </div>
         </div>

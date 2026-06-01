@@ -1,7 +1,7 @@
 import api from './api'
 
 export const segmentsService = {
-  // Получить все сегменты
+  
   getAllSegments: async () => {
     try {
       const response = await api.get('/segments')
@@ -12,7 +12,7 @@ export const segmentsService = {
     }
   },
 
-  // Получить сегмент по ID
+  
   getSegmentById: async (id) => {
     try {
       const response = await api.get('/segments/id', {
@@ -25,7 +25,7 @@ export const segmentsService = {
     }
   },
 
-  // Получить сегменты по ID пользователя
+  
   getSegmentsByUserId: async (userId) => {
     try {
       const response = await api.get('/segments/user', {
@@ -38,7 +38,7 @@ export const segmentsService = {
     }
   },
 
-  // Получить сегменты по имени пользователя
+  
   getSegmentsByUsername: async (lastname, name = null) => {
     try {
       const params = { lastname: lastname }
@@ -53,7 +53,7 @@ export const segmentsService = {
     }
   },
 
-  // Получить сегменты по типу (VIP, Standard и т.д.)
+  
   getSegmentsByType: async (segment) => {
     try {
       const response = await api.get('/segments/type', {
@@ -66,7 +66,7 @@ export const segmentsService = {
     }
   },
 
-  // Фильтрация по R (давности)
+  
   getSegmentsByRMore: async (R) => {
     try {
       const response = await api.get('/segments/R/more', {
@@ -103,7 +103,7 @@ export const segmentsService = {
     }
   },
 
-  // Фильтрация по F (частоте)
+  
   getSegmentsByFMore: async (F) => {
     try {
       const response = await api.get('/segments/F/more', {
@@ -140,7 +140,7 @@ export const segmentsService = {
     }
   },
 
-  // Фильтрация по M (денежной сумме)
+  
   getSegmentsByMMore: async (M) => {
     try {
       const response = await api.get('/segments/M/more', {

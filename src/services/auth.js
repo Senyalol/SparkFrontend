@@ -2,11 +2,11 @@ import api from './api'
 import { tokenStorage } from '../utils/tokenStorage'
 
 export const authService = {
-  // Регистрация нового аналитика
+  
   register: async (login, password, userToken) => {
     try {
       const requestData = {
-        token: userToken,  // invite token
+        token: userToken,  
         login: login,
         password: password
       }
@@ -14,8 +14,8 @@ export const authService = {
       
       const response = await api.post('/analyst/reg', requestData)
       
-      console.log('✅ [REGISTER] Response:', response.data)
-      console.log('✅ [REGISTER] Status:', response.status)
+      console.log(' [REGISTER] Response:', response.data)
+      console.log(' [REGISTER] Status:', response.status)
       
       if (response.status === 200 || response.status === 201) {
         return { 
@@ -30,9 +30,9 @@ export const authService = {
         error: response.data?.message || 'Ошибка регистрации' 
       }
     } catch (error) {
-      console.error('❌ [REGISTER] Error:', error)
-      console.error('❌ [REGISTER] Status:', error.response?.status)
-      console.error('❌ [REGISTER] Data:', error.response?.data)
+      console.error(' [REGISTER] Error:', error)
+      console.error(' [REGISTER] Status:', error.response?.status)
+      console.error(' [REGISTER] Data:', error.response?.data)
       
       if (error.response?.status === 403) {
         return {
@@ -59,35 +59,35 @@ export const authService = {
   login: async (login, password, userToken) => {
     try {
       const requestData = {
-        token: userToken,  // invite token
+        token: userToken,  
         login: login,
         password: password
       }
-      console.log('📝 [LOGIN] Request:', requestData)
+      console.log(' [LOGIN] Request:', requestData)
       
       const response = await api.post('/analyst/auth', requestData)
       
-      console.log('✅ [LOGIN] Response:', response.data)
-      console.log('✅ [LOGIN] Status:', response.status)
+      console.log(' [LOGIN] Response:', response.data)
+      console.log(' [LOGIN] Status:', response.status)
       
-      // Бэкенд возвращает поле "token" (JWT access token)
+      
       if (response.data && response.data.token) {
         const accessToken = response.data.token
         tokenStorage.setAccessToken(accessToken)
-        console.log('💾 [LOGIN] Access token saved')
+        console.log(' [LOGIN] Access token saved')
         
-        // Сохраняем refresh token если есть
+        
         if (response.data.refreshToken) {
           tokenStorage.setRefreshToken(response.data.refreshToken)
-          console.log('💾 [LOGIN] Refresh token saved')
+          console.log(' [LOGIN] Refresh token saved')
         }
         
-        // Определяем роль по invite токену
+        
         let userRole = 'ANALYST'
         if (userToken && userToken.toUpperCase().includes('ADMIN')) {
           userRole = 'ADMIN'
         }
-        console.log('🎭 [LOGIN] Role determined from invite token:', userRole)
+        console.log(' [LOGIN] Role determined from invite token:', userRole)
         
         const userData = {
           login: login,
@@ -95,7 +95,7 @@ export const authService = {
           inviteToken: userToken
         }
         tokenStorage.setUser(userData)
-        console.log('💾 [LOGIN] User data saved:', userData)
+        console.log(' [LOGIN] User data saved:', userData)
         
         return { 
           success: true, 
@@ -108,9 +108,9 @@ export const authService = {
         error: response.data?.message || 'Неверный логин, пароль или токен' 
       }
     } catch (error) {
-      console.error('❌ [LOGIN] Error:', error)
-      console.error('❌ [LOGIN] Status:', error.response?.status)
-      console.error('❌ [LOGIN] Data:', error.response?.data)
+      console.error(' [LOGIN] Error:', error)
+      console.error(' [LOGIN] Status:', error.response?.status)
+      console.error(' [LOGIN] Data:', error.response?.data)
       
       if (error.response?.status === 403) {
         return {
@@ -133,20 +133,20 @@ export const authService = {
     }
   },
 
-  // Получить текущего аналитика из JWT
+  
   getCurrentAnalyst: async () => {
     try {
       const token = tokenStorage.getAccessToken()
       if (!token) {
-        console.log('🔍 [GET_CURRENT] No access token found')
+        console.log(' [GET_CURRENT] No access token found')
         return null
       }
       
       const response = await api.get('/analyst/getFromJWT')
-      console.log('✅ [GET_CURRENT] Response:', response.data)
+      console.log(' [GET_CURRENT] Response:', response.data)
       return response.data
     } catch (error) {
-      console.error('❌ [GET_CURRENT] Error:', error)
+      console.error(' [GET_CURRENT] Error:', error)
       if (error.response?.status === 401 || error.response?.status === 403) {
         tokenStorage.clear()
       }
@@ -154,24 +154,24 @@ export const authService = {
     }
   },
 
-  // Выход
+  
   logout: async () => {
     try {
       const token = tokenStorage.getAccessToken()
       if (token) {
-        // await api.get('/analyst/exit')
+        
         localStorage.clear()
-        console.log('✅ [LOGOUT] Success')
+        console.log(' [LOGOUT] Success')
       }
     } catch (error) {
-      console.error('❌ [LOGOUT] Error:', error)
+      console.error(' [LOGOUT] Error:', error)
     } finally {
-      localStorage.clear()  // ← удаляет ВСЁ
-      console.log('🗑️ [LOGOUT] All localStorage cleared')
+      localStorage.clear()  
+      console.log(' [LOGOUT] All localStorage cleared')
   }
   },
 
-  // Обновление токена
+  
   refreshToken: async () => {
     try {
       const refreshToken = tokenStorage.getRefreshToken()
@@ -188,13 +188,13 @@ export const authService = {
         if (response.data.refreshToken) {
           tokenStorage.setRefreshToken(response.data.refreshToken)
         }
-        console.log('✅ [REFRESH] Token refreshed')
+        console.log(' [REFRESH] Token refreshed')
         return { success: true }
       }
       
       return { success: false }
     } catch (error) {
-      console.error('❌ [REFRESH] Error:', error)
+      console.error(' [REFRESH] Error:', error)
       tokenStorage.clear()
       return { success: false }
     }

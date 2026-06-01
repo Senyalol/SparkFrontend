@@ -10,7 +10,7 @@ const adminApi = axios.create({
   },
 })
 
-// Добавляем access token в каждый запрос
+
 adminApi.interceptors.request.use((config) => {
   const token = tokenStorage.getAccessToken()
   if (token) {

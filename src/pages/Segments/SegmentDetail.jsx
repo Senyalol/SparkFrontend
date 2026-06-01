@@ -124,7 +124,7 @@ const SegmentDetail = () => {
             cursor: 'pointer'
           }}
         >
-          👤 Перейти к пользователю
+          Перейти к пользователю
         </button>
       </div>
 

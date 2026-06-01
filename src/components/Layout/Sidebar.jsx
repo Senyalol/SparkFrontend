@@ -7,15 +7,15 @@ const Sidebar = () => {
   const isAdmin = hasAdminAccess(userRole)
 
   const commonMenuItems = [
-    { path: '/dashboard', label: 'Дашборд', icon: '📊' },
-    { path: '/users', label: 'Пользователи', icon: '👥' },
-    { path: '/segments', label: 'Сегменты', icon: '🏷️' },
-    { path: '/anomalies', label: 'Аномалии', icon: '⚠️' },
+    { path: '/dashboard', label: 'Дашборд'},
+    { path: '/users', label: 'Пользователи'},
+    { path: '/segments', label: 'Сегменты'},
+    { path: '/anomalies', label: 'Аномалии'},
   ]
 
   const adminMenuItems = [
-    { path: '/analysts', label: 'Аналитики', icon: '👨‍💻' },
-    { path: '/admin/tokens', label: 'Токены', icon: '🔑' },
+    { path: '/analysts', label: 'Аналитики'},
+    { path: '/admin/tokens', label: 'Токены'},
   ]
 
   return (

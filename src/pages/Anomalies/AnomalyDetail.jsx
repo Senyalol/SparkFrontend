@@ -10,7 +10,7 @@ const AnomalyDetail = () => {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
 
-  // Функции для отображения (те же что и в AnomaliesList)
+  
   const getTransactionType = (message) => {
     if (!message) return '—'
     if (message.includes('Credit')) return 'Credit'
@@ -127,11 +127,9 @@ const AnomalyDetail = () => {
     )
   }
 
-  // 🔄 ПОМЕНЯЛИ МЕСТАМИ: 
-  // Тип транзакции теперь берем из anomaly.type (было из message)
-  // Тип аномалии теперь берем из anomaly.message (было из type)
-  const transactionType = getTransactionType(anomaly.type)      // ← из type
-  const anomalyTypeName = getAnomalyTypeName(anomaly.message)   // ← из message
+  
+  const transactionType = getTransactionType(anomaly.type)      
+  const anomalyTypeName = getAnomalyTypeName(anomaly.message)   
 
   return (
     <div>
@@ -217,7 +215,7 @@ const AnomalyDetail = () => {
             </div>
           </div>
 
-          {/* Правая колонка */}
+          
           <div>
             <div style={{ marginBottom: '16px' }}>
               <div style={{ fontSize: '12px', color: '#666', marginBottom: '4px' }}>Время</div>

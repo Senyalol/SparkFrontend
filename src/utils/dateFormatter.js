@@ -1,8 +1,7 @@
 // Преобразование даты из input datetime-local в формат LocalDateTime для API
 export const dateToLocalDateTime = (dateString) => {
   if (!dateString) return null
-  // input datetime-local возвращает "2024-01-15T10:30"
-  // Добавляем секунды, если их нет
+ 
   let formatted = dateString
   if (formatted.length === 16) {
     formatted = `${formatted}:00`
@@ -11,7 +10,6 @@ export const dateToLocalDateTime = (dateString) => {
   return formatted
 }
 
-// Форматирование даты из строки в читаемый вид
 export const formatDateTime = (timestamp) => {
   if (!timestamp) return '—'
   try {
@@ -28,16 +26,16 @@ export const formatDateTime = (timestamp) => {
   }
 }
 
-// Старая функция для timestamp (оставляем на всякий случай)
+
 export const dateToTimestamp = (dateString) => {
   if (!dateString) return null
   const date = new Date(dateString)
   const timestamp = date.getTime()
-  console.log(`📅 Date conversion: ${dateString} -> ${timestamp}`)
+  console.log(` Date conversion: ${dateString} -> ${timestamp}`)
   return timestamp
 }
 
-// Форматирует минуты в человеко-читаемый формат
+
 export const formatMinutes = (minutes) => {
   if (!minutes) return '—'
   

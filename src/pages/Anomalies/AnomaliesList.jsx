@@ -9,19 +9,19 @@ const AnomaliesList = () => {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   
-  // Состояния для фильтров
+  
   const [filterType, setFilterType] = useState('all')
   const [searchValue, setSearchValue] = useState('')
   const [rangeMin, setRangeMin] = useState('')
   const [rangeMax, setRangeMax] = useState('')
   const [showFilters, setShowFilters] = useState(false)
   
-  // Состояния для фильтров по времени
+  
   const [dateValue, setDateValue] = useState('')
   const [rangeMinDate, setRangeMinDate] = useState('')
   const [rangeMaxDate, setRangeMaxDate] = useState('')
 
-  // Маппинг для типов аномалий (русское название -> enum)
+  
   const reverseAnomalyTypeMapping = {
     'NEGATIVE_M': 'Отрицательный баланс',
     'BIGGER_THEN_AVG_CHECK': 'Превышение среднего чека',
@@ -30,7 +30,7 @@ const AnomaliesList = () => {
     'EXCESSIVE_REVERSAL_PATTERN': 'Подозрительный возврат'
   }
 
-  // Список типов аномалий для выбора
+  
   const anomalyTypes = [
     { value: 'NEGATIVE_M', label: 'Отрицательный баланс' },
     { value: 'BIGGER_THEN_AVG_CHECK', label: 'Превышение среднего чека' },
@@ -39,7 +39,7 @@ const AnomaliesList = () => {
     { value: 'EXCESSIVE_REVERSAL_PATTERN', label: 'Подозрительный возврат' }
   ]
 
-  // ========== ФУНКЦИИ ДЛЯ ДИНАМИЧЕСКОГО ТИПА ПОЛЯ ==========
+  
   const getInputType = () => {
     if (filterType === 'userId') return 'number'
     if (filterType === 'type') return 'select'
@@ -77,9 +77,7 @@ const AnomaliesList = () => {
       default: return 'Введите значение'
     }
   }
-  // ========== КОНЕЦ ФУНКЦИЙ ==========
-
-  // ========== ФУНКЦИИ ДЛЯ ОТОБРАЖЕНИЯ ==========
+  
   
   const getTransactionType = (type) => {
     if (!type) return '—'
@@ -127,7 +125,7 @@ const AnomaliesList = () => {
         return { bg: '#e0e0e0', color: '#666' }
     }
   }
-  // ========== КОНЕЦ ФУНКЦИЙ ==========
+  
 
   const loadAllAnomalies = async () => {
     setLoading(true)

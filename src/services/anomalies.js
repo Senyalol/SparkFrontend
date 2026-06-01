@@ -119,7 +119,7 @@ export const anomaliesService = {
 
   getAnomaliesByTimeLess: async (min) => {
     try {
-      console.log('📡 [GET] /anomaly/time/less', { min })
+      console.log(' [GET] /anomaly/time/less', { min })
       const response = await api.get('/anomaly/time/less', {
         params: { min: min }
       })

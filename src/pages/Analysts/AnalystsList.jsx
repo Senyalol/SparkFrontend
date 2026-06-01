@@ -68,11 +68,11 @@ const AnalystsList = () => {
     if (window.confirm('Вы уверены, что хотите удалить этого аналитика?')) {
       setLoading(true)
       try {
-        // Сначала получаем ID по логину
+        
         const analystId = await analystsService.getAnalystIdByLogin(login)
         console.log('Found analyst ID:', analystId)
         
-        // Удаляем по ID
+       
         await analystsService.deleteAnalyst(analystId)
         await loadAnalysts()
       } catch (err) {
