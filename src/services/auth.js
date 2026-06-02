@@ -1,26 +1,39 @@
 import api from './api'
 import { tokenStorage } from '../utils/tokenStorage'
 
+// Функция для декодирования JWT и получения роли
+const getRoleFromJWT = (token) => {
+  if (!token) return 'ANALYST'
+  try {
+    const payload = JSON.parse(atob(token.split('.')[1]))
+    console.log('🔐 Decoded JWT payload:', payload)
+    const role = payload.role || payload.authorities || 'ANALYST'
+    console.log('👑 Role from JWT:', role)
+    return role
+  } catch (error) {
+    console.error('Failed to decode JWT:', error)
+    return 'ANALYST'
+  }
+}
+
 export const authService = {
-  
   register: async (login, password, userToken) => {
     try {
       const requestData = {
-        token: userToken,  
+        token: userToken,
         login: login,
         password: password
       }
-      console.log('📝 [REGISTER] Request:', requestData)
+      console.log('Register request:', requestData)
       
       const response = await api.post('/analyst/reg', requestData)
       
-      console.log(' [REGISTER] Response:', response.data)
-      console.log(' [REGISTER] Status:', response.status)
+      console.log('Register response:', response.data)
       
       if (response.status === 200 || response.status === 201) {
         return { 
           success: true, 
-          message: 'Регистрация успешна! Теперь вы можете войти.',
+          message: 'Регистрация успешна',
           data: response.data
         }
       }
@@ -30,21 +43,12 @@ export const authService = {
         error: response.data?.message || 'Ошибка регистрации' 
       }
     } catch (error) {
-      console.error(' [REGISTER] Error:', error)
-      console.error(' [REGISTER] Status:', error.response?.status)
-      console.error(' [REGISTER] Data:', error.response?.data)
+      console.error('Registration error:', error)
       
       if (error.response?.status === 403) {
         return {
           success: false,
-          error: 'Неверный или просроченный invite токен. Обратитесь к администратору.'
-        }
-      }
-      
-      if (error.response?.status === 400) {
-        return {
-          success: false,
-          error: error.response?.data?.message || 'Неверные данные регистрации'
+          error: 'Неверный или просроченный токен. Обратитесь к администратору.'
         }
       }
       
@@ -55,39 +59,30 @@ export const authService = {
     }
   },
 
-  // Авторизация
   login: async (login, password, userToken) => {
     try {
       const requestData = {
-        token: userToken,  
+        token: userToken,
         login: login,
         password: password
       }
-      console.log(' [LOGIN] Request:', requestData)
+      console.log('Login request:', requestData)
       
       const response = await api.post('/analyst/auth', requestData)
       
-      console.log(' [LOGIN] Response:', response.data)
-      console.log(' [LOGIN] Status:', response.status)
-      
+      console.log('Login response:', response.data)
       
       if (response.data && response.data.token) {
         const accessToken = response.data.token
         tokenStorage.setAccessToken(accessToken)
-        console.log(' [LOGIN] Access token saved')
-        
+        console.log('Access token saved')
         
         if (response.data.refreshToken) {
           tokenStorage.setRefreshToken(response.data.refreshToken)
-          console.log(' [LOGIN] Refresh token saved')
         }
         
         
-        let userRole = 'ANALYST'
-        if (userToken && userToken.toUpperCase().includes('ADMIN')) {
-          userRole = 'ADMIN'
-        }
-        console.log(' [LOGIN] Role determined from invite token:', userRole)
+        const userRole = getRoleFromJWT(accessToken)
         
         const userData = {
           login: login,
@@ -95,7 +90,7 @@ export const authService = {
           inviteToken: userToken
         }
         tokenStorage.setUser(userData)
-        console.log(' [LOGIN] User data saved:', userData)
+        console.log('User data saved:', userData)
         
         return { 
           success: true, 
@@ -108,21 +103,12 @@ export const authService = {
         error: response.data?.message || 'Неверный логин, пароль или токен' 
       }
     } catch (error) {
-      console.error(' [LOGIN] Error:', error)
-      console.error(' [LOGIN] Status:', error.response?.status)
-      console.error(' [LOGIN] Data:', error.response?.data)
+      console.error('Login error:', error)
       
       if (error.response?.status === 403) {
         return {
           success: false,
-          error: 'Доступ запрещен. Неверный invite токен, логин или пароль.'
-        }
-      }
-      
-      if (error.response?.status === 401) {
-        return {
-          success: false,
-          error: 'Неверный логин или пароль'
+          error: 'Доступ запрещен. Неверный токен, логин или пароль.'
         }
       }
       
@@ -133,20 +119,15 @@ export const authService = {
     }
   },
 
-  
   getCurrentAnalyst: async () => {
     try {
       const token = tokenStorage.getAccessToken()
-      if (!token) {
-        console.log(' [GET_CURRENT] No access token found')
-        return null
-      }
+      if (!token) return null
       
       const response = await api.get('/analyst/getFromJWT')
-      console.log(' [GET_CURRENT] Response:', response.data)
       return response.data
     } catch (error) {
-      console.error(' [GET_CURRENT] Error:', error)
+      console.error('Get current analyst error:', error)
       if (error.response?.status === 401 || error.response?.status === 403) {
         tokenStorage.clear()
       }
@@ -154,24 +135,19 @@ export const authService = {
     }
   },
 
-  
   logout: async () => {
     try {
       const token = tokenStorage.getAccessToken()
       if (token) {
-        
-        localStorage.clear()
-        console.log(' [LOGOUT] Success')
+        await api.get('/analyst/exit')
       }
     } catch (error) {
-      console.error(' [LOGOUT] Error:', error)
+      console.error('Logout error:', error)
     } finally {
-      localStorage.clear()  
-      console.log(' [LOGOUT] All localStorage cleared')
-  }
+      tokenStorage.clear()
+    }
   },
 
-  
   refreshToken: async () => {
     try {
       const refreshToken = tokenStorage.getRefreshToken()
@@ -188,13 +164,12 @@ export const authService = {
         if (response.data.refreshToken) {
           tokenStorage.setRefreshToken(response.data.refreshToken)
         }
-        console.log(' [REFRESH] Token refreshed')
         return { success: true }
       }
       
       return { success: false }
     } catch (error) {
-      console.error(' [REFRESH] Error:', error)
+      console.error('Refresh token error:', error)
       tokenStorage.clear()
       return { success: false }
     }
